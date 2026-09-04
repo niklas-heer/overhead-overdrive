@@ -20,11 +20,16 @@ export type VehicleState = {
   boost: number;
   heat: number;
   drifting: boolean;
+  /** Charge earned by a sustained, deliberate handbrake slide. */
+  driftCharge: number;
+  /** Seconds remaining on the mini-turbo earned by releasing a charged drift. */
+  driftTurbo: number;
   collision: number;
 };
 
 export const VEHICLE_RADIUS = 0.7;
 export const FIXED_STEP = 1 / 120;
+export const DRIFT_READY_CHARGE = 0.45;
 const clamp = (n: number, lo: number, hi: number) =>
   Math.max(lo, Math.min(hi, n));
 const moveToward = (value: number, target: number, delta: number) =>
@@ -36,6 +41,7 @@ type Dynamics = {
   pitchVelocity: number;
   wobbleVelocity: number;
   overheated: boolean;
+  wasBraking: boolean;
 };
 const dynamics = new WeakMap<VehicleState, Dynamics>();
 function internals(state: VehicleState): Dynamics {
@@ -47,6 +53,7 @@ function internals(state: VehicleState): Dynamics {
       pitchVelocity: 0,
       wobbleVelocity: 0,
       overheated: false,
+      wasBraking: false,
     };
     dynamics.set(state, value);
   }
@@ -68,6 +75,8 @@ export function createVehicle(x: number, z: number, yaw: number): VehicleState {
     boost: 1,
     heat: 0,
     drifting: false,
+    driftCharge: 0,
+    driftTurbo: 0,
     collision: 0,
   };
 }
@@ -141,6 +150,24 @@ function integrate(
   let longitudinal = s.vx * fx + s.vz * fz;
   let lateral = s.vx * rx + s.vz * rz;
 
+  // Earn the burst through real cornering. Steering at rest, reversing, and
+  // merely holding the handbrake cannot bank charge for the next straight.
+  s.driftTurbo = Math.max(0, s.driftTurbo - dt);
+  const cleanForward =
+    forward > 3 && initialSpeed > 6 && throttle > 0 && s.collision <= 0;
+  if (input.brake) {
+    s.driftTurbo = 0;
+    const sliding =
+      cleanForward && Math.abs(steer) > 0.25 && Math.abs(lateral) > 0.75;
+    s.driftCharge = sliding ? clamp(s.driftCharge + dt / 1.15, 0, 1) : 0;
+  } else {
+    if (d.wasBraking && cleanForward && s.driftCharge >= DRIFT_READY_CHARGE)
+      s.driftTurbo = 0.45 + s.driftCharge * 0.6;
+    s.driftCharge = 0;
+  }
+  if (throttle <= 0 || s.collision > 0) s.driftTurbo = 0;
+  d.wasBraking = input.brake;
+
   if (s.heat >= 0.98) d.overheated = true;
   if (s.heat <= 0.4) d.overheated = false;
   const boosting =
@@ -156,7 +183,9 @@ function integrate(
   const opposing = longitudinal * throttle < -0.15;
   let drive =
     throttle * (opposing ? 21 : throttle < 0 ? 6.2 * motor : 10.3 * motor);
-  if (boosting) drive += 10.5 * motor;
+  // Manual boost and drift rewards share a ceiling, rather than multiplying
+  // one another into uncontrollable speed. Neither spends the other's fuel.
+  if (boosting || s.driftTurbo > 0) drive += (boosting ? 10.5 : 8.5) * motor;
   // Bluff-body drag grows quadratically: stock cruising speed is about 16 m/s.
   const drag = 0.037 * longitudinal * initialSpeed;
   drive -= drag;
@@ -219,6 +248,8 @@ function contact(
   nz: number,
   penetration: number,
 ): void {
+  s.driftCharge = 0;
+  s.driftTurbo = 0;
   s.x += nx * (penetration + 0.001);
   s.z += nz * (penetration + 0.001);
   const into = s.vx * nx + s.vz * nz;

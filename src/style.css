@@ -1589,3 +1589,237 @@ h2 {
 .item-slot:active {
   filter: brightness(1.12);
 }
+
+/* Keep the driving line open; reserve the lower corners for instruments. */
+.item-slot {
+  width: 298px;
+  min-height: 65px;
+  padding: 10px 13px;
+  bottom: 70px;
+  gap: 10px;
+}
+#item-name {
+  font-size: 20px;
+}
+#item-hint {
+  line-height: 1.4;
+}
+.speedometer .drift-meter {
+  display: block;
+  height: 4px;
+  width: 100%;
+  margin: 7px 0;
+  background: #172c3140;
+  overflow: hidden;
+}
+#drift-charge {
+  height: 100%;
+  background: #75e8ee;
+  transition: width 0.08s linear;
+}
+#drift-charge.ready {
+  background: #ffc360;
+  box-shadow: 0 0 12px #ffc36090;
+}
+#hud .speedometer .drift-meter {
+  display: block;
+}
+.book-podium {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 9px;
+  margin: 25px auto 14px;
+  max-width: 390px;
+}
+.podium-place {
+  width: 31%;
+  text-align: center;
+}
+.podium-place > span {
+  display: block;
+  font-size: 9px;
+  font-weight: 800;
+  margin: 8px 0;
+  color: var(--racer);
+}
+.book-stack {
+  height: 64px;
+  border: 3px solid var(--racer);
+  background: repeating-linear-gradient(
+    0deg,
+    #e7dfc5 0px,
+    #e7dfc5 3px,
+    #c9c3aa 4px,
+    #e7dfc5 5px
+  );
+  border-radius: 3px 8px 8px 3px;
+  color: #20373a;
+  box-shadow: 0 5px 0 #12272a50;
+  position: relative;
+}
+.place-1 .book-stack {
+  height: 86px;
+}
+.place-3 .book-stack {
+  height: 46px;
+}
+.book-stack strong {
+  display: block;
+  font:
+    italic 30px Impact,
+    sans-serif;
+}
+.book-stack small {
+  font-size: 5px;
+  letter-spacing: 0.3px;
+  font-weight: 900;
+}
+.podium-machine {
+  height: 47px;
+  width: 46px;
+  position: relative;
+  margin: auto;
+  transform: rotate(-4deg);
+}
+.place-1 .podium-machine {
+  animation: victory-wobble 1.8s ease-in-out infinite;
+}
+.podium-machine::before {
+  content: "";
+  width: 41px;
+  height: 23px;
+  background: #eee4c9;
+  border-bottom: 7px solid var(--racer);
+  position: absolute;
+  left: 0;
+  bottom: 3px;
+  box-shadow: 2px 3px 0 #778783;
+}
+.podium-machine::after {
+  content: "";
+  width: 5px;
+  height: 30px;
+  background: #849996;
+  position: absolute;
+  right: 8px;
+  top: 0;
+}
+.podium-machine i {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 24px;
+  height: 8px;
+  background: #eadfc5;
+  z-index: 1;
+  transform: rotate(-12deg);
+}
+.podium-machine b {
+  position: absolute;
+  bottom: 0;
+  left: 5px;
+  height: 5px;
+  width: 6px;
+  background: #142d31;
+  box-shadow: 24px 0 #142d31;
+}
+.result-awards {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  border-top: 1px solid #a0b8ae30;
+  padding-top: 13px;
+}
+.result-awards span {
+  font-size: 7px;
+  letter-spacing: 0.7px;
+}
+.result-awards b {
+  display: block;
+  font:
+    24px Impact,
+    sans-serif;
+  color: #ef8053;
+  margin-bottom: 3px;
+}
+.book-podium ~ .result-time {
+  font-size: 42px;
+  margin: 15px 0 4px;
+}
+@keyframes victory-wobble {
+  0%,
+  100% {
+    transform: rotate(-5deg) translateY(0);
+  }
+  50% {
+    transform: rotate(5deg) translateY(-4px);
+  }
+}
+@media (max-width: 760px) {
+  .item-slot {
+    left: auto;
+    right: 5%;
+    top: 165px;
+    bottom: auto;
+    transform: none;
+    width: 166px;
+    min-height: 58px;
+    padding: 8px;
+    gap: 7px;
+  }
+  .item-slot .tiny,
+  #item-key {
+    display: none;
+  }
+  #item-name {
+    font-size: 16px;
+  }
+  #item-hint {
+    font-size: 7px;
+  }
+  #item-icon {
+    font-size: 22px;
+    width: 20px;
+  }
+  #status-badges {
+    bottom: 212px;
+  }
+  .book-podium {
+    margin-top: 17px;
+    max-width: 300px;
+  }
+  .book-podium ~ .result-time {
+    font-size: 35px;
+  }
+  .result-awards {
+    gap: 11px;
+  }
+}
+@media (max-height: 700px) and (min-width: 761px) {
+  .book-podium {
+    margin: 14px auto 8px;
+    max-width: 330px;
+  }
+  .book-stack {
+    height: 45px;
+  }
+  .place-1 .book-stack {
+    height: 60px;
+  }
+  .place-3 .book-stack {
+    height: 40px;
+  }
+  .book-podium ~ .result-time {
+    margin: 9px 0 0;
+    font-size: 32px;
+  }
+  .result-awards {
+    padding-top: 8px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .place-1 .podium-machine {
+    animation: none;
+  }
+}

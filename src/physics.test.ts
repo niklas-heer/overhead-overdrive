@@ -3,6 +3,7 @@ import {
   collideAABB,
   collideCircle,
   createVehicle,
+  DRIFT_READY_CHARGE,
   FIXED_STEP,
   stepVehicle,
   type Input,
@@ -123,6 +124,110 @@ describe("projector dynamics", () => {
     }
     for (const value of Object.values(s))
       if (typeof value === "number") expect(Number.isFinite(value)).toBe(true);
+  });
+});
+
+describe("drift mini-turbo", () => {
+  const slide = { ...accelerate, steer: 0.6, brake: true };
+  function chargedVehicle() {
+    const s = createVehicle(0, 0, 0);
+    run(s, 4);
+    run(s, 0.8, slide);
+    expect(s.driftCharge).toBeGreaterThan(DRIFT_READY_CHARGE);
+    return s;
+  }
+
+  it("rewards a sustained corner on release with a short, fuel-free acceleration pulse", () => {
+    const s = chargedVehicle();
+    expect(s.driftTurbo).toBe(0);
+    run(s, FIXED_STEP);
+    expect(s.driftCharge).toBe(0);
+    expect(s.driftTurbo).toBeGreaterThan(0.7);
+    expect(s.driftTurbo).toBeLessThanOrEqual(1.05);
+    const control = { ...s, driftTurbo: 0 };
+    run(s, 0.4);
+    run(control, 0.4);
+    expect(s.speed).toBeGreaterThan(control.speed + 1);
+    expect(s.boost).toBe(control.boost);
+    expect(s.heat).toBe(control.heat);
+    run(s, 1);
+    expect(s.driftTurbo).toBe(0);
+  });
+
+  it("does not charge from stationary steering, reversing, or straight-line handbraking", () => {
+    for (const input of [slide, { ...slide, throttle: -1 }]) {
+      const s = createVehicle(0, 0, 0);
+      run(s, 8, input);
+      expect(s.driftCharge).toBe(0);
+      run(s, FIXED_STEP);
+      expect(s.driftTurbo).toBe(0);
+    }
+    const straight = createVehicle(0, 0, 0);
+    run(straight, 4);
+    run(straight, 0.8, { ...slide, steer: 0 });
+    expect(straight.driftCharge).toBe(0);
+  });
+
+  it("cancels incomplete and interrupted slides rather than storing charge", () => {
+    const short = createVehicle(0, 0, 0);
+    run(short, 4);
+    run(short, 0.3, slide);
+    expect(short.driftCharge).toBeGreaterThan(0);
+    run(short, FIXED_STEP);
+    expect(short.driftTurbo).toBe(0);
+    expect(short.driftCharge).toBe(0);
+    for (const input of [
+      { ...slide, steer: 0 },
+      { ...slide, throttle: 0 },
+    ]) {
+      const s = chargedVehicle();
+      run(s, FIXED_STEP, input);
+      expect(s.driftCharge).toBe(0);
+      run(s, FIXED_STEP);
+      expect(s.driftTurbo).toBe(0);
+    }
+  });
+
+  it("wall contact cancels banked charge and active turbo", () => {
+    for (const release of [false, true]) {
+      const s = chargedVehicle();
+      if (release) run(s, FIXED_STEP);
+      collideCircle(s, s.x, s.z, 1);
+      expect(s.driftCharge).toBe(0);
+      expect(s.driftTurbo).toBe(0);
+      run(s, FIXED_STEP);
+      expect(s.driftTurbo).toBe(0);
+    }
+  });
+
+  it("does not stack with boost and cancels its pulse when the handbrake is pulled again", () => {
+    const s = chargedVehicle();
+    run(s, FIXED_STEP);
+    const manualOnly = { ...s, driftTurbo: 0 };
+    run(s, 0.2, { ...accelerate, boost: true });
+    run(manualOnly, 0.2, { ...accelerate, boost: true });
+    expect(s.speed).toBe(manualOnly.speed);
+    run(s, FIXED_STEP, slide);
+    expect(s.driftTurbo).toBe(0);
+    run(s, FIXED_STEP);
+    expect(s.driftTurbo).toBe(0);
+  });
+
+  it("earns identical charge and rewards at 30, 60, and 120 Hz", () => {
+    const results = [30, 60, 120].map((hz) => {
+      const s = createVehicle(0, 0, 0);
+      for (const [seconds, input] of [
+        [4, accelerate],
+        [0.8, slide],
+        [0.3, accelerate],
+      ] as const)
+        for (let frame = 0; frame < seconds * hz; frame++)
+          stepVehicle(s, input, 1 / hz, stock);
+      expect(s.driftTurbo).toBeGreaterThan(0);
+      return s;
+    });
+    expect(results[0]).toEqual(results[1]);
+    expect(results[1]).toEqual(results[2]);
   });
 });
 

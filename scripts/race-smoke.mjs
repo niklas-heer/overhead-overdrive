@@ -52,7 +52,7 @@ try {
   );
   const result = await page.evaluate(() => ({
     game: window.__OVERDRIVE__,
-    best: localStorage.getItem("overdrive-v2-best-atrium-1"),
+    best: localStorage.getItem("overdrive-v3-best-atrium-1"),
   }));
   assert.equal(result.game.laps, 3);
   assert.ok(Number(result.best) > 0);

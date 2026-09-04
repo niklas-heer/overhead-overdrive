@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { buildWorld, createProjector, tracks, type Track } from "./world";
 import {
   createVehicle,
+  DRIFT_READY_CHARGE,
   stepVehicle,
   collideAABB,
   collideCircle,
@@ -9,7 +10,9 @@ import {
   type Input,
 } from "./physics";
 import "./style.css";
-import { CasterTrails } from "./effects";
+import { CasterTrails, DriftSparks } from "./effects";
+import { animateProjector } from "./personality";
+import { SchoolMischief } from "./mischief";
 import { GameAudio } from "./audio";
 import { ItemSystem, ITEM_INFO, type ItemKind } from "./items";
 import { ItemView } from "./item-view";
@@ -43,7 +46,7 @@ app.innerHTML = `
   <section id="garage" class="panel hidden"><span class="eyebrow">THE GARAGE / BUILT DIFFERENT</span><h2>Office equipment.<br><em>Unprofessional speed.</em></h2><p>Choose your setup. Every part changes how the trolley handles.</p><div id="setups" class="setups"></div><div class="paint-row"><span>RACING LIVERY</span><div id="paints"></div></div><button id="garage-done" class="primary">BACK TO THE GRID <span>↗</span></button></section>
   <section id="school" class="panel school-panel hidden"><span class="eyebrow">THE SCHOOL / REAL PLACE. UNREAL RACING.</span><h2>Back to<br><em>Gaildorf.</em></h2><p>A 3D interpretation of the Schenk-von-Limpurg-Gymnasium, built from its public architecture photos: the glass-roof atrium, white brick walls, yellow doors and steel gallery railings.</p><div class="school-note"><strong>A familiar school. A new racing line.</strong><p>The visual details follow photos. Room connections, dimensions and race courses are imagined for the game, not a surveyed reconstruction.</p></div><div class="source-links"><a href="https://www.svlg-gaildorf.de/de/unsere-schule/profil" target="_blank" rel="noopener">EXPLORE THE SCHOOL WEBSITE ↗</a><a href="/school-reference.md" target="_blank" rel="noopener">PHOTO REFERENCES & MODEL NOTES ↗</a></div><button id="tour" class="primary">TAKE A FREE DRIVE <span>↗</span></button><button id="export-model" class="secondary">DOWNLOAD THIS 3D SCHOOL · GLB ↓</button><p id="export-status" role="status"></p></section>
   <footer id="footer"><span>A LOVE LETTER TO SCHOOL DAYS & ARCADE RACERS.</span><span>NO HOMEWORK. JUST HORSEPOWER. <b>↗</b></span></footer>
-  <section id="hud" class="hidden"><div class="hud-top"><div><span class="tiny" id="race-title">ATRIUM CIRCUIT</span><div class="position"><strong id="position">1</strong><span>/ 4</span></div></div><div class="timing"><span class="tiny" id="lap">LAP 1 / 3</span><strong id="timer">00:00.00</strong><span id="best" class="tiny"></span></div><button id="pause" class="hud-button" aria-label="Pause game">Ⅱ</button></div><div id="standings" class="standings"></div><button id="race-sound" class="race-sound" aria-label="Toggle race sound">SOUND OFF</button><button id="item-slot" class="item-slot" aria-label="Use equipped item"><span id="item-icon">＋</span><div><span class="tiny">SCHOOL SUPPLIES</span><strong id="item-name">FIND A PICKUP</strong><span id="item-hint">Drive through a glowing supply box</span></div><kbd id="item-key">E</kbd></button><div id="status-badges"></div><div id="hit-flash"></div><div id="countdown"></div><div id="race-message"></div><div class="hud-bottom"><div class="map-block"><canvas id="minimap" width="220" height="160"></canvas><span id="next-turn" class="tiny">FOLLOW THE PAINTED ARROWS</span></div><div class="race-controls"><span>WASD / ARROWS · DRIVE</span><span>SPACE · DRIFT &nbsp; SHIFT · BOOST &nbsp; E · USE ITEM</span><span>R · RECOVER &nbsp; C · CAMERA &nbsp; ESC · PAUSE</span></div><div class="speedometer"><span id="drift-label">READY TO ROLL</span><div><strong id="speed">0</strong><span>KM/H</span></div><div class="boost-track"><div id="boost-bar"></div></div><span class="tiny">LAMP OVERDRIVE <span id="boost-value">100%</span></span></div></div><div id="touch-controls"><button data-key="ArrowLeft" aria-label="Steer left">◀</button><button data-key="ArrowRight" aria-label="Steer right">▶</button><button data-key="ArrowDown" aria-label="Brake and reverse">↓</button><button data-key="Space">DRIFT</button><button data-key="ShiftLeft">BOOST</button><button data-key="KeyE" aria-label="Use item">ITEM</button><button data-key="ArrowUp">GO</button></div></section>
+  <section id="hud" class="hidden"><div class="hud-top"><div><span class="tiny" id="race-title">ATRIUM CIRCUIT</span><div class="position"><strong id="position">1</strong><span>/ 4</span></div></div><div class="timing"><span class="tiny" id="lap">LAP 1 / 3</span><strong id="timer">00:00.00</strong><span id="best" class="tiny"></span></div><button id="pause" class="hud-button" aria-label="Pause game">Ⅱ</button></div><div id="standings" class="standings"></div><button id="race-sound" class="race-sound" aria-label="Toggle race sound">SOUND OFF</button><button id="item-slot" class="item-slot" aria-label="Use equipped item"><span id="item-icon">＋</span><div><span class="tiny">SCHOOL SUPPLIES</span><strong id="item-name">FIND A PICKUP</strong><span id="item-hint">Drive through a glowing supply box</span></div><kbd id="item-key">E</kbd></button><div id="status-badges"></div><div id="hit-flash"></div><div id="countdown"></div><div id="race-message"></div><div class="hud-bottom"><div class="map-block"><canvas id="minimap" width="220" height="160"></canvas><span id="next-turn" class="tiny">FOLLOW THE PAINTED ARROWS</span></div><div class="race-controls"><span>WASD / ARROWS · DRIVE</span><span>SPACE · DRIFT &nbsp; SHIFT · BOOST &nbsp; E · USE ITEM</span><span>R · RECOVER &nbsp; C · CAMERA &nbsp; ESC · PAUSE</span></div><div class="speedometer"><span id="drift-label">READY TO ROLL</span><div><strong id="speed">0</strong><span>KM/H</span></div><div class="drift-meter" aria-label="Drift charge"><div id="drift-charge"></div></div><div class="boost-track"><div id="boost-bar"></div></div><span class="tiny">LAMP OVERDRIVE <span id="boost-value">100%</span></span></div></div><div id="touch-controls"><button data-key="ArrowLeft" aria-label="Steer left">◀</button><button data-key="ArrowRight" aria-label="Steer right">▶</button><button data-key="ArrowDown" aria-label="Brake and reverse">↓</button><button data-key="Space">DRIFT</button><button data-key="ShiftLeft">BOOST</button><button data-key="KeyE" aria-label="Use item">ITEM</button><button data-key="ArrowUp">GO</button></div></section>
   <div id="overlay" class="overlay hidden"><div class="dialog"><span class="eyebrow" id="overlay-tag">RECESS</span><h2 id="overlay-title">Take a breather.</h2><p id="overlay-copy">Your projector is keeping the lamp warm.</p><div id="results"></div><button id="resume" class="primary">KEEP ROLLING <span>↗</span></button><button id="restart" class="secondary">RESTART RACE</button><button id="quit" class="text-button">BACK TO SCHOOL SELECTION</button></div></div>
   <div id="error" class="hidden"></div>`;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
@@ -133,6 +136,10 @@ sun.shadow.bias = -0.0004;
 sun.shadow.normalBias = 0.06;
 scene.add(sun);
 const trails = new CasterTrails(scene);
+const sparks = new DriftSparks(scene);
+let mischief: SchoolMischief;
+let driftReleases = 0;
+let momentCount = 0;
 let world: ReturnType<typeof buildWorld>;
 let items: ItemSystem;
 let itemView: ItemView;
@@ -145,7 +152,7 @@ let racers: Racer[] = [],
   accumulator = 0,
   recoverPenalty = 0;
 const keys = new Set<string>();
-const bestKey = () => `overdrive-v2-best-${selected.id}-${setupIndex}`;
+const bestKey = () => `overdrive-v3-best-${selected.id}-${setupIndex}`;
 const getBest = () => {
   try {
     return Number(localStorage.getItem(bestKey()) || 0);
@@ -188,10 +195,13 @@ function removeRacers() {
 function loadTrack(track: Track) {
   selected = track;
   trails.clear();
+  sparks.clear();
+  mischief?.dispose();
   itemView?.dispose();
   if (world) world.dispose();
   removeRacers();
   world = buildWorld(scene, track);
+  mischief = new SchoolMischief(scene, world, track);
   const length = world.curve.getLength();
   checkpoints = Array.from(
     { length: Math.max(20, Math.round(length / 5)) },
@@ -244,7 +254,11 @@ function loadTrack(track: Track) {
     targetPositions,
     world.colliders,
   );
-  itemView = new ItemView(scene, items);
+  itemView = new ItemView(
+    scene,
+    items,
+    racers.map((r) => r.mesh),
+  );
   const outside = selected.id !== "atrium";
   scene.background = new THREE.Color(outside ? "#b5cdda" : "#b7c8c8");
   scene.fog = new THREE.Fog(
@@ -369,6 +383,8 @@ function startRace(tour = false) {
   raceTime = 0;
   hitFlash = 0;
   lastEventText = "";
+  driftReleases = 0;
+  momentCount = 0;
   $("race-message").textContent = "";
   recoverPenalty = 0;
   countdownTime = 3.6;
@@ -440,11 +456,31 @@ function finish() {
   $("overlay-tag").textContent = isBest
     ? "NEW PERSONAL BEST"
     : "CLASS DISMISSED";
-  $("overlay-title").textContent = "That’s a wrap.";
+  $("overlay-title").textContent =
+    getPosition() === 1 ? "Top of the class." : "Gloriously unqualified.";
   $("overlay-copy").textContent =
     `${selected.name} · ${setups[setupIndex].name} · 3 laps · ${items.equipment[0].hits} laser hits`;
+  const podium = racers
+    .map((r, i) => ({ r, i }))
+    .sort((a, b) =>
+      a.r.finished && b.r.finished
+        ? a.r.finishTime - b.r.finishTime
+        : a.r.finished
+          ? -1
+          : b.r.finished
+            ? 1
+            : progress(b.r) - progress(a.r),
+    )
+    .slice(0, 3);
   $("results").innerHTML =
-    `<div class="result-time">${format(raceTime)}</div><p>FINISHED ${ordinal(getPosition())} / 4${isBest ? " · YOUR FASTEST RUN YET" : ""}</p>`;
+    `<div class="book-podium" aria-label="Race podium">${[1, 0, 2]
+      .map((index) => {
+        const { r, i } = podium[index];
+        return `<div class="podium-place place-${index + 1}" style="--racer:${r.color}"><div class="podium-machine" aria-hidden="true"><i></i><b></b></div><span>${i === 0 ? "YOU" : r.name}</span><div class="book-stack"><strong>${index + 1}</strong><small>${["ADVANCED CHAOS", "APPLIED WOBBLE", "LOOSE SCREWS"][index]}</small></div></div>`;
+      })
+      .join(
+        "",
+      )}</div><div class="result-awards"><span><b>${driftReleases}</b> CASTER KICKS</span><span><b>${items.equipment[0].hits}</b> LASER TAGS</span><span><b>${momentCount}</b> MISCHIEF MOMENTS</span></div><div class="result-time">${format(raceTime)}</div><p>FINISHED ${ordinal(getPosition())} / 4${isBest ? " · YOUR FASTEST RUN YET" : ""}</p>`;
   hidden("resume", true);
   $("restart").textContent = "ONE MORE RACE";
 }
@@ -554,7 +590,10 @@ function step(dt: number) {
     input.throttle *= 0.25;
     input.steer *= 0.6;
     input.boost = false;
+    player.state.driftCharge = player.state.driftTurbo = 0;
   }
+  const beforeCharge = player.state.driftCharge;
+  const beforeTurbo = player.state.driftTurbo;
   stepVehicle(player.state, input, dt, setups[setupIndex]);
   collide(player);
   if (mode === "race") {
@@ -577,6 +616,7 @@ function step(dt: number) {
         ai.throttle *= 0.25;
         ai.steer *= 0.6;
         ai.boost = false;
+        r.state.driftCharge = r.state.driftTurbo = 0;
       }
       stepVehicle(r.state, ai, dt, RIVAL_PROFILES[i - 1].tuning);
       r.itemTimer -= dt;
@@ -644,6 +684,7 @@ function step(dt: number) {
           b.z -= nz * overlap;
           const vel = (a.vx - b.vx) * nx + (a.vz - b.vz) * nz;
           if (vel < 0) {
+            a.driftCharge = a.driftTurbo = b.driftCharge = b.driftTurbo = 0;
             a.vx -= vel * nx * 0.6;
             a.vz -= vel * nz * 0.6;
             b.vx += vel * nx * 0.6;
@@ -656,6 +697,19 @@ function step(dt: number) {
   items.equipment.forEach((equipment, i) => {
     equipment.active = !racers[i].finished && (mode !== "tour" || i === 0);
   });
+  for (const event of mischief.update(
+    dt,
+    racers
+      .filter((r, i) => !r.finished && (mode !== "tour" || i === 0))
+      .map((r) => r.state),
+    true,
+  )) {
+    if (event.racerIndex === 0 && !player.finished) {
+      momentCount++;
+      audio.mischief();
+      if (recoverPenalty <= 0) announce(event.title, 1.4);
+    }
+  }
   items.step(dt);
   if (keys.has("KeyE") || keys.has("KeyQ")) items.use(0);
   for (const event of items.drainEvents()) {
@@ -693,6 +747,16 @@ function step(dt: number) {
       announce("POP QUIZ CLEARED · +20% LAMP", 1.6);
     }
   }
+  if (
+    beforeCharge < DRIFT_READY_CHARGE &&
+    player.state.driftCharge >= DRIFT_READY_CHARGE
+  )
+    audio.driftReady();
+  if (beforeTurbo <= 0 && player.state.driftTurbo > 0) {
+    driftReleases++;
+    audio.driftRelease();
+    announce("CASTER KICK!", 1.1);
+  }
   // Grass and paved aprons stay explorable, but cutting far off the racing path costs speed.
   for (const r of racers) {
     if (r.finished || (mode === "tour" && r !== player)) continue;
@@ -720,25 +784,22 @@ function announce(text: string, seconds: number) {
   recoverPenalty = seconds;
   $("race-message").textContent = text;
 }
-function syncModels(time: number) {
+function syncModels(time: number, dt = 0) {
   for (let i = 0; i < racers.length; i++) {
     const r = racers[i],
       s = r.state;
     r.mesh.visible =
       mode === "menu" ? i === 0 : mode === "tour" ? i === 0 : true;
     r.mesh.position.set(s.x, 0.055, s.z);
-    r.mesh.rotation.set(
-      s.pitch,
-      s.yaw + (items?.equipment[i].stun > 0 ? Math.sin(time * 28) * 0.06 : 0),
-      -s.roll,
-      "YXZ",
-    );
-    const mast = r.mesh.getObjectByName("mast");
-    if (mast)
-      mast.rotation.z =
-        s.wobble + (mode === "menu" ? Math.sin(time * 1.3) * 0.008 : 0);
-    r.mesh.traverse((o) => {
-      if (o.name.startsWith("wheel")) o.rotation.x += s.speed * 0.0008;
+    r.mesh.rotation.set(0, s.yaw, 0);
+    animateProjector(r.mesh, s, dt, time, {
+      idle: mode === "menu",
+      stun: items?.equipment[i].stun ?? 0,
+      turbo:
+        s.driftTurbo > 0 ||
+        items?.equipment[i].turbo > 0 ||
+        (i === 0 && keys.has("ShiftLeft") && s.heat < 0.98 && s.boost > 0.02),
+      celebrating: mode === "finish" && i === 0,
     });
   }
 }
@@ -751,9 +812,9 @@ function updateCamera(dt: number, time: number) {
   if (mode === "menu") {
     const angle = s.yaw + 0.8 + Math.sin(time * 0.12) * 0.13;
     desiredCam.set(
-      s.x + Math.sin(angle) * 8.3,
-      4.9,
-      s.z + Math.cos(angle) * 8.3,
+      s.x + Math.sin(angle) * 7.6,
+      3.5,
+      s.z + Math.cos(angle) * 7.6,
     );
     lookAt.copy(pos).add(new THREE.Vector3(0, 1.2, 0));
     camera.setViewOffset(
@@ -771,11 +832,15 @@ function updateCamera(dt: number, time: number) {
       lookAt.copy(pos);
     } else {
       desiredCam.set(
-        s.x - Math.sin(s.yaw) * (7.2 + Math.abs(s.speed) * 0.09),
-        4.4 + Math.abs(s.speed) * 0.028,
-        s.z - Math.cos(s.yaw) * (7.2 + Math.abs(s.speed) * 0.09),
+        s.x - Math.sin(s.yaw) * (9.0 + Math.abs(s.speed) * 0.065),
+        5.2 + Math.abs(s.speed) * 0.022,
+        s.z - Math.cos(s.yaw) * (9.0 + Math.abs(s.speed) * 0.065),
       );
-      lookAt.set(s.x + Math.sin(s.yaw) * 3, 1.05, s.z + Math.cos(s.yaw) * 3);
+      lookAt.set(
+        s.x + Math.sin(s.yaw) * 4.7 + s.vx * 0.07,
+        1.05,
+        s.z + Math.cos(s.yaw) * 4.7 + s.vz * 0.07,
+      );
     }
   }
   const factor = 1 - Math.exp(-dt * (mode === "menu" ? 3 : 5));
@@ -787,7 +852,7 @@ function updateCamera(dt: number, time: number) {
       ? 49
       : 49 +
         Math.min(8, Math.max(0, s.speed - 10) * 0.5) +
-        (items.equipment[0].turbo > 0 ? 3 : 0);
+        (items.equipment[0].turbo > 0 || s.driftTurbo > 0 ? 3 : 0);
   camera.fov = THREE.MathUtils.lerp(
     camera.fov,
     targetFov,
@@ -889,14 +954,35 @@ function updateHUD() {
   $("boost-bar").style.width = `${s.boost * 100}%`;
   $("boost-value").textContent = `${Math.round(s.boost * 100)}%`;
   $("drift-label").textContent =
-    s.heat > 0.88
-      ? "LAMP COOLING"
-      : s.drifting
-        ? "CASTER CHAOS"
-        : (keys.has("ShiftLeft") || keys.has("ShiftRight")) && s.boost > 0.02
-          ? "LAMP OVERDRIVE"
-          : "READY TO ROLL";
-  $("drift-label").classList.toggle("hot", s.drifting);
+    s.driftTurbo > 0
+      ? "CASTER KICK!"
+      : s.driftCharge >= DRIFT_READY_CHARGE
+        ? "RELEASE SPACE → KICK!"
+        : s.driftCharge > 0
+          ? "CHARGING CASTERS"
+          : s.heat > 0.88
+            ? "LAMP COOLING"
+            : s.drifting
+              ? "CASTER CHAOS"
+              : (keys.has("ShiftLeft") || keys.has("ShiftRight")) &&
+                  s.boost > 0.02
+                ? "LAMP OVERDRIVE"
+                : "READY TO ROLL";
+  $("drift-label").classList.toggle(
+    "hot",
+    s.driftCharge >= DRIFT_READY_CHARGE || s.driftTurbo > 0,
+  );
+  $("drift-charge").style.width = `${s.driftCharge * 100}%`;
+  $("drift-charge").classList.toggle(
+    "ready",
+    s.driftCharge >= DRIFT_READY_CHARGE,
+  );
+  $("next-turn").textContent =
+    s.driftCharge >= DRIFT_READY_CHARGE
+      ? "RELEASE DRIFT FOR A SPEED KICK"
+      : raceTime < 8
+        ? "SPACE + STEER · CHARGE A DRIFT KICK"
+        : "GOLD CHEVRONS · A CHEEKY SPEED KICK";
   $("timer").textContent = format(raceTime);
   $("lap").textContent =
     mode === "tour"
@@ -1026,7 +1112,16 @@ function frame(now: number) {
     step(1 / 120);
     accumulator -= 1 / 120;
   }
-  syncModels(now / 1000);
+  const visualDt = ["paused", "finish"].includes(mode) ? 0 : dt;
+  syncModels(now / 1000, mode === "finish" ? dt : visualDt);
+  sparks.update(
+    ["race", "tour"].includes(mode) ? dt : 0,
+    mode === "menu" || mode === "finish"
+      ? []
+      : mode === "tour"
+        ? [racers[0].state]
+        : racers.map((r) => r.state),
+  );
   updateCamera(dt, now / 1000);
   if (mode !== "menu") updateHUD();
   itemView.update(
@@ -1052,6 +1147,8 @@ Object.defineProperty(window, "__OVERDRIVE__", {
     charges: items.equipment[0].charges,
     shield: items.equipment[0].shield,
     hits: items.equipment[0].hits,
+    driftReleases,
+    momentCount,
     message: lastEventText,
     pickups: items.pickups.map((p) => ({ ...p })),
     quizTargets: items.targets.map((p) => ({ ...p })),

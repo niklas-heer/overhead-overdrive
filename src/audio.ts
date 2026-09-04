@@ -70,10 +70,11 @@ export class GameAudio {
     const time = this.context.currentTime;
     const speed = clamp(Math.abs(state.speed) / 23);
     const boosting =
-      input.boost &&
-      state.boost > 0.02 &&
-      state.heat < 0.98 &&
-      input.throttle > 0;
+      state.driftTurbo > 0 ||
+      (input.boost &&
+        state.boost > 0.02 &&
+        state.heat < 0.98 &&
+        input.throttle > 0);
     this.dynamics!.gain.setTargetAtTime(1, time, 0.15);
     // The cooling fan follows lamp load, not vehicle RPM. No ever-rising engine whine.
     this.fan!.gain.gain.setTargetAtTime(
@@ -126,6 +127,19 @@ export class GameAudio {
     }
   }
 
+  driftReady() {
+    this.note(660, 740, 0.08, 0.028);
+    this.note(880, 990, 0.11, 0.024, 0.07);
+  }
+  driftRelease() {
+    this.puff(850, 0.18, 0.11);
+    this.note(185, 95, 0.065, 0.065);
+    this.note(440, 880, 0.19, 0.026, 0.035);
+  }
+  mischief() {
+    this.puff(1500, 0.16, 0.055);
+    this.note(280, 180, 0.055, 0.025);
+  }
   click() {
     this.note(540, 480, 0.085, 0.032);
   }

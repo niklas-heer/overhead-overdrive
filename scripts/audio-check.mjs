@@ -23,6 +23,9 @@ try {
     });
     audio.start();
     audio.click();
+    audio.driftReady();
+    audio.driftRelease();
+    audio.mischief();
     const silentUntilEnabled = created === 0;
     const state = {
       x: 0,
@@ -38,10 +41,19 @@ try {
       boost: 1,
       heat: 0.1,
       drifting: false,
+      driftCharge: 0,
+      driftTurbo: 0,
       collision: 0,
     };
     const input = { throttle: 0, steer: 0, brake: false, boost: false };
     const checkpoints = [];
+    const exercised = {
+      driftReady: 0,
+      driftRelease: 0,
+      mischief: 0,
+      driftTurboTicks: 0,
+      mutedCues: 0,
+    };
     for (let tick = 1; tick < duration * 10; tick++) {
       const at = tick / 10;
       checkpoints.push(
@@ -53,16 +65,41 @@ try {
             input.throttle = tick < 20 ? 0 : 1;
             input.boost = tick >= 65 && tick < 80;
             state.drifting = tick >= 80 && tick < 95;
+            state.driftCharge = state.drifting
+              ? Math.min(1, (tick - 80) / 10)
+              : 0;
+            // Releasing the charged slide should sound boosted even with Shift released.
+            state.driftTurbo = tick >= 95 && tick < 105 ? (105 - tick) / 10 : 0;
+            if (state.driftTurbo > 0 && !input.boost)
+              exercised.driftTurboTicks++;
             audio.update(state, input, 0.1);
           }
           if (tick === 30) audio.pickup();
           if (tick === 42 || tick === 47) audio.laser();
           if (tick === 55) audio.hit();
           if (tick === 65) audio.boost();
+          if (tick === 57) {
+            audio.mischief();
+            exercised.mischief++;
+          }
+          if (tick === 84) {
+            audio.driftReady();
+            exercised.driftReady++;
+          }
+          if (tick === 95) {
+            audio.driftRelease();
+            exercised.driftRelease++;
+          }
           if (tick === 95) audio.shield();
           if (tick === 103) audio.bell();
           if (tick === 110) audio.quiet();
           if (tick === 120) audio.toggle();
+          if (tick === 123) {
+            audio.driftReady();
+            audio.driftRelease();
+            audio.mischief();
+            exercised.mutedCues += 3;
+          }
           await context.resume();
         }),
       );
@@ -92,6 +129,7 @@ try {
     return {
       samples,
       sampleRate,
+      exercised,
       silentUntilEnabled,
       peak,
       rms: Math.sqrt(square / left.length),
@@ -106,6 +144,17 @@ try {
     "No audio context before opt-in",
   );
   assert.equal(result.initialPeak, 0, "Opt-in starts from silence");
+  assert.deepEqual(
+    result.exercised,
+    {
+      driftReady: 1,
+      driftRelease: 1,
+      mischief: 1,
+      driftTurboTicks: 10,
+      mutedCues: 3,
+    },
+    "New cues, mini-turbo without manual boost, and post-mute cues exercised",
+  );
   assert.ok(
     result.samples.every(Number.isFinite),
     "All rendered samples are finite",
@@ -146,7 +195,7 @@ try {
   await writeFile("docs/audio-preview.wav", data);
   delete result.samples;
   console.log(
-    "PASS: original projector mix, opt-in, amplitude, continuity, mute fade",
+    "PASS: projector mix, drift cues, mini-turbo, mischief, opt-in, amplitude, continuity, mute fade",
     result,
   );
   console.log(

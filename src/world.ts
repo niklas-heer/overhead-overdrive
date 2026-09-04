@@ -1132,21 +1132,37 @@ export function createProjector(color: string, raceNumber = 1): THREE.Group {
   box(0, 0.62, 0, 0.075, 1.27, 0.075, metal, mast);
   box(0, 0.32, 0, 0.125, 0.14, 0.13, black, mast);
   box(0, 1.21, 0.21, 0.085, 0.075, 0.46, metal, mast);
-  box(0, 1.2, 0.35, 0.53, 0.16, 0.47, cream, mast);
+  // A real pivot gives the lens head a little mechanical personality.
+  const head = new THREE.Group();
+  head.name = "projector-head";
+  head.position.set(0, 1.2, 0.35);
+  mast.add(head);
+  box(0, 0, 0, 0.53, 0.16, 0.47, cream, head);
   const lens = new THREE.Mesh(
     new THREE.CylinderGeometry(0.15, 0.15, 0.075, 20),
     black,
   );
-  lens.position.set(0, 1.075, 0.37);
-  mast.add(lens);
+  lens.position.set(0, -0.125, 0.02);
+  head.add(lens);
   const lensGlass = new THREE.Mesh(
     new THREE.CylinderGeometry(0.126, 0.126, 0.079, 20),
     glass,
   );
   lensGlass.position.copy(lens.position);
-  mast.add(lensGlass);
-  const mirror = box(0, 1.34, 0.33, 0.48, 0.035, 0.44, metal, mast);
+  head.add(lensGlass);
+  const mirror = box(0, 0.14, -0.02, 0.48, 0.035, 0.44, metal, head);
   mirror.rotation.x = -0.55;
+  // Two modest indicator lights suggest an expression without hiding the optics.
+  const indicator = new THREE.MeshStandardMaterial({
+    color: "#ffe7ac",
+    emissive: "#ffcf64",
+    emissiveIntensity: 0.8,
+  });
+  for (const x of [-0.115, 0.115]) {
+    box(x, 0.015, 0.239, 0.07, 0.026, 0.012, black, head);
+    box(x, 0.015, 0.247, 0.046, 0.012, 0.009, indicator, head);
+  }
+  head.userData.lamp = glass;
   box(0.075, 1.02, 0.582, 0.31, 0.1, 0.015, cream);
   box(-0.37, 1.015, 0.594, 0.063, 0.063, 0.027, black);
   const lamp = new THREE.Mesh(
