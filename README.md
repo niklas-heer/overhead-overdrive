@@ -28,14 +28,19 @@ npm run preview
 - Three-lap races against three opponents using the same vehicle dynamics as the player: The Prefect takes precise lines, Turbo Tutor boosts and overtakes, and Loose Caster makes brief drifting turns.
 - Sequential checkpoints, exact finish-line crossing, finishing-order tracking, race timer, and local personal bests per track and setup.
 - Three handling setups: balanced Original, grippy Hall Monitor, and powerful Loose Cannon; five paint colors.
-- Caster drifting, visible skid trails, a flexing mast, acceleration squat, impact wobble, quadratic drag, and rechargeable lamp boost with thermal lockout.
+- Caster drifting with a charge-and-release speed kick: blue sparks build to gold, then release Space while accelerating to launch. Contact cancels charge, and manual boost shares an acceleration ceiling.
+- Expressive lens heads look into corners, recoil under boost and droop when tagged. Casters swivel and chatter; body lean stays separate from the grounded wheels.
+- Gold-chevron mischief lanes: flying worksheets and wobbling books in the atrium, rumble strips under the canopy, and leaf bursts in the park. Each gives a bounded speed kick and lamp recharge. A nervous cleaning robot yields to approaching racers.
+- Visible skid trails, a flexing mast, acceleration squat, impact wobble, quadratic drag, and rechargeable lamp boost with thermal lockout.
 - Chase and overhead cameras, minimap, recovery, pause, restart, and untimed free driving.
 - Keyboard, clickable item slot, and small-screen touch driving controls.
 - Collectible laser pointers (three shots), seven-second one-hit transparency shields, and two-second capacitor boosts. Press **E** or **Q** to use the equipped item.
 - Lasers tag rivals for a short slowdown. Temporary hit immunity prevents repeated stun-locking, scenery blocks beams, and glowing **POP QUIZ** targets recharge lamp energy when hit.
 - Rival name/position panel, item status display, brief hit feedback, and speed-sensitive camera framing.
 - Gentle projector fan/hum, caster rolling and drift sounds, plus distinct pickup/laser/shield effects. Sound can be toggled during a race.
-- Original procedural 3D school scenery, projector models, materials, signage, lamp beams, and synthesized audio.
+- Compact 3D laser pens, acetate shields and capacitor cartridges, with near-camera fading and rigidly mounted laser pointers.
+- A textbook finish podium and counts of caster kicks, laser tags and mischief moments.
+- Original procedural 3D school scenery, projector models, materials, signage, and synthesized audio.
 - **The School → Download this 3D school** exports the selected environment as GLB. Ready-exported models are in [`models/`](models/).
 
 ## Controls
@@ -45,7 +50,7 @@ npm run preview
 | W / ↑ | Accelerate |
 | S / ↓ | Brake, then reverse |
 | A / D or ← / → | Steer |
-| Space | Handbrake / caster drift |
+| Space | Hold with steering and throttle to charge a drift; release for a caster kick |
 | Shift | Lamp overdrive |
 | E / Q / click item slot | Fire laser or use held power-up |
 | R | Recover at the last checkpoint (+2 seconds during a race) |
@@ -55,11 +60,13 @@ npm run preview
 
 Lift or brake before tight turns; short handbrake taps help rotate the trolley. Steering authority decreases with speed. The Hall Monitor is the easiest setup for learning. Boost drains lamp energy and builds heat, then recharges when released. Switching away from the game pauses it automatically.
 
+For a caster kick, enter a corner with speed, keep accelerating and hold Space while steering. The drift bar turns gold when ready; release Space to spend the charge. A wall/rival collision, reverse driving or a broken slide cancels it. Gold road chevrons mark optional school-mischief lanes; take them in the forward direction at speed for a burst and 12% lamp recharge.
+
 ## The three places
 
 **Atrium Circuit** is the indoor school hall: white brick, graphite tiles, yellow stairs, glass roof and galleries. **Canopy Run** threads an asymmetric route between separate school wings, a red-column covered passage, courtyards and curved bicycle shelters. **Kocher Park** leaves the forecourt for a wooded pond loop and the riverbank. Each has different geometry, scenery, turn rhythm and lap length. The source photographs and maps informed the architecture and setting; the route connections and dimensions remain adapted for racing.
 
-The track rewrite uses a new local-record key, so times from the old room layouts do not compete with the new circuits.
+The drift/mischief update uses a new local-record key (v3), so times with the new speed rewards do not compete with earlier handling. Previous records remain in browser storage.
 
 ## School model and photographs
 
@@ -76,7 +83,7 @@ This is an arcade vehicle model with physically motivated behavior. Wheels do no
 ## Checks
 
 ```sh
-npm test                 # 29 physics, items and rival regression tests
+npm test                 # 42 physics, items, rivals, animation and mischief tests
 npm run test:ai          # 9 full AI race simulations against actual world colliders
 AI_PACK=1 npm run test:ai # also validate 9 three-rival pack completions
 npm run build            # strict TypeScript + production bundle
@@ -90,6 +97,7 @@ npm run test:browser     # menu, garage, controls, pause, recovery, tracks, tour
 node scripts/steering-smoke.mjs # driver-relative A/D and arrow-key regression
 node scripts/race-smoke.mjs    # keyboard-driven race with item use, finish + saved record
 node scripts/items-smoke.mjs   # real pickup, laser, item UI, sound, pause/restart
+node scripts/drift-smoke.mjs   # real keyboard drift charge/release, pulse and HUD
 node scripts/audio-check.mjs   # render and validate the actual audio graph
 node scripts/export-models.mjs # regenerate and validate the three GLB exports
 ```
@@ -104,7 +112,9 @@ Browser scripts default to port 5173. `GAME_URL` overrides the URL for all brows
 - `src/audio.ts`: original fan/rolling sound design and short item effects.
 - `src/physics.ts`: dependency-free vehicle dynamics and contact response.
 - `src/world.ts`: circuits, original school geometry/materials and projector model.
-- `src/effects.ts`: bounded, instanced caster skid trails.
+- `src/effects.ts`: bounded, instanced caster skid trails and drift sparks.
+- `src/personality.ts`: cosmetic head, body and caster animation.
+- `src/mischief.ts`: track-specific reward lanes, pooled paper/leaf effects and yielding caretaker.
 - `src/style.css`: responsive visual design.
 - `docs/school-reference.md`: inspected photographs, supplied maps and reconstruction scope.
 - `docs/audio-notes.md` / `docs/audio-preview.wav`: audio design notes and a render of the actual sound graph.
