@@ -1823,3 +1823,581 @@ h2 {
     animation: none;
   }
 }
+
+/* The staffroom crew: compact choices, full-size personality in the 3D preview. */
+.crew-shortcut {
+  display: block;
+  margin-top: 14px;
+  border: 0;
+  border-bottom: 1px solid #ef805380;
+  background: #162c3070;
+  padding: 8px 10px;
+  font-size: 9px;
+  letter-spacing: 0.8px;
+  text-align: left;
+  color: #f6c174;
+  pointer-events: auto;
+}
+.crew-picker {
+  margin: 24px 0 30px;
+  padding: 18px;
+  border: 1px solid #a1b6a635;
+  border-radius: 6px;
+  background: #142c30df;
+}
+.crew-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+.crew-heading > .tiny {
+  color: #c4d2c8;
+  font-size: 8px;
+  letter-spacing: 1.7px;
+}
+.crew-modes {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: #0e2226;
+  border-radius: 3px;
+}
+.crew-modes button {
+  padding: 8px 11px;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  color: #b2c7bd;
+}
+.crew-modes button[aria-pressed="true"] {
+  color: #203438;
+  background: #f1c16b;
+}
+.rider-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 9px;
+}
+.rider-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid #a1b6a63b;
+  background: #1e383c;
+  border-radius: 4px;
+  text-align: left;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.rider-card.selected {
+  border-color: var(--crew);
+  background: #2b4141;
+  box-shadow: inset 3px 0 var(--crew);
+}
+.rider-card:hover {
+  background: #2c4749;
+  border-color: var(--crew);
+}
+.rider-card svg {
+  width: 49px;
+  height: 53px;
+  flex-shrink: 0;
+}
+.rider-card > span {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.rider-card strong {
+  font-family: "Barlow Condensed", Impact, sans-serif;
+  font-size: 20px;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+.rider-card small {
+  color: #b5c8bd;
+  font-size: 6px;
+  letter-spacing: 1px;
+}
+.rider-card > b {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  color: var(--crew);
+  font-size: 10px;
+}
+.rider-bio {
+  color: #dae1d3;
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 14px 0 8px;
+  min-height: 37px;
+}
+.crew-note {
+  color: #94aca3;
+  font-size: 9px;
+}
+.tuning-label {
+  margin-top: 20px;
+  font-size: 8px;
+  color: #b8cbc0;
+}
+#garage .setups {
+  margin-top: 12px;
+}
+#garage-done {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  margin-top: 18px;
+  box-shadow: 0 -6px 25px #142b30a0;
+}
+.podium-rider {
+  position: absolute;
+  left: -9px;
+  bottom: 8px;
+  width: 12px;
+  height: 28px;
+  background: var(--shirt);
+  border-radius: 5px 5px 2px 2px;
+  transform: rotate(12deg);
+  z-index: 2;
+}
+.podium-rider::before {
+  content: "";
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 5px;
+  background: var(--skin);
+  top: -10px;
+  left: 1px;
+}
+.podium-rider::after {
+  content: "";
+  position: absolute;
+  width: 19px;
+  height: 4px;
+  border-radius: 3px;
+  top: 6px;
+  left: 3px;
+  background: var(--shirt);
+  transform: rotate(18deg);
+}
+@media (max-width: 760px) {
+  .crew-picker {
+    margin-top: 18px;
+    padding: 12px;
+  }
+  .crew-heading {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .crew-heading > .tiny {
+    font-size: 7px;
+  }
+  .crew-modes button {
+    font-size: 7px;
+    padding: 7px 9px;
+  }
+  .rider-cards {
+    gap: 7px;
+  }
+  .rider-card {
+    gap: 7px;
+    padding: 8px 6px;
+  }
+  .rider-card svg {
+    width: 35px;
+    height: 39px;
+  }
+  .rider-card strong {
+    font-size: 16px;
+  }
+  .rider-card small {
+    font-size: 5px;
+    letter-spacing: 0.4px;
+  }
+  .rider-bio {
+    font-size: 10px;
+  }
+  .crew-note {
+    font-size: 8px;
+  }
+  #garage-done {
+    width: 100%;
+  }
+}
+@media (min-width: 761px) {
+  #garage {
+    width: min(560px, 53vw);
+    padding-top: 30px;
+  }
+  #garage h2 {
+    font-size: clamp(36px, 4.1vw, 57px);
+  }
+  #garage > p {
+    font-size: 12px;
+  }
+  #garage .rider-card strong {
+    font-size: 17px;
+  }
+  #garage .rider-card svg {
+    width: 38px;
+    height: 43px;
+  }
+  #garage .crew-picker {
+    padding: 12px;
+  }
+  #garage .crew-heading > .tiny {
+    font-size: 7px;
+    letter-spacing: 1px;
+  }
+  #garage .crew-modes button {
+    font-size: 7px;
+    padding: 7px 8px;
+  }
+  #garage .setup {
+    padding: 12px;
+  }
+  #garage .setup strong {
+    font-size: 22px;
+  }
+  #garage .setup p {
+    font-size: 10px;
+  }
+}
+@media (min-width: 761px) and (max-width: 1000px) {
+  #garage .rider-cards {
+    grid-template-columns: 1fr;
+  }
+  #garage .rider-card {
+    padding: 6px 9px;
+  }
+  #garage .rider-card svg {
+    width: 33px;
+    height: 37px;
+  }
+  #garage .setups {
+    grid-template-columns: 1fr;
+  }
+  #garage .setup p {
+    min-height: 0;
+    margin: 8px 0;
+  }
+  #garage .stat {
+    display: inline-flex;
+    width: 30%;
+    margin-right: 3%;
+  }
+  #garage .stat span {
+    min-width: 30px;
+    font-size: 6px;
+  }
+}
+/* Stick-figure silhouettes carry through to the textbook podium. */
+.podium-rider {
+  width: 4px;
+  height: 21px;
+  left: -7px;
+  bottom: 13px;
+  border-radius: 3px;
+}
+.podium-rider::before {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  left: -3px;
+  top: -10px;
+}
+.podium-rider::after {
+  width: 18px;
+  height: 3px;
+  top: 6px;
+  left: 0;
+}
+.podium-rider > span {
+  position: absolute;
+  width: 3px;
+  height: 13px;
+  background: var(--shirt);
+  bottom: -10px;
+  left: -2px;
+  border-radius: 2px;
+  transform: rotate(20deg);
+}
+.podium-rider > span::after {
+  content: "";
+  position: absolute;
+  width: 3px;
+  height: 13px;
+  background: var(--shirt);
+  top: -2px;
+  left: 5px;
+  border-radius: 2px;
+  transform: rotate(-40deg);
+}
+/* A school noticeboard for competition and private clubs. */
+.online-panel {
+  max-width: 1160px;
+  width: calc(100% - 96px);
+  padding-bottom: 100px;
+  z-index: 12;
+  background: rgba(232, 237, 226, 0.97);
+  border: 1px solid #bbc6b7;
+  border-radius: 18px;
+  box-shadow: 0 22px 90px #203c3926;
+  margin: 15px auto;
+}
+.online-panel h2 {
+  font-size: clamp(36px, 5vw, 64px);
+}
+.online-panel > p {
+  max-width: 700px;
+}
+.online-identity {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 20px 0;
+}
+.online-identity label,
+.join-label,
+.online-filters label {
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  font-weight: 800;
+}
+.online-identity span {
+  font-size: 11px;
+  color: #687a70;
+}
+.online-panel input,
+.online-panel select {
+  border: 1px solid #9faf9e;
+  border-radius: 6px;
+  background: #f9fbf5;
+  color: #26392f;
+  padding: 11px 12px;
+  font: inherit;
+  min-width: 0;
+}
+.online-panel input:focus,
+.online-panel select:focus {
+  outline: 2px solid #ef744f;
+  outline-offset: 2px;
+}
+.online-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 22px;
+}
+.online-card {
+  background: #f4f7ef;
+  border: 1px solid #b8c5b4;
+  border-radius: 10px;
+  padding: 24px;
+}
+.online-card h3 {
+  font-size: 30px;
+  margin: 8px 0 12px;
+  letter-spacing: -1px;
+}
+.online-card p {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.online-card .primary {
+  width: 100%;
+  margin: 14px 0 0;
+}
+.online-filters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.online-filters label:last-child {
+  grid-column: 1/-1;
+}
+.online-filters select {
+  display: block;
+  width: 100%;
+  margin-top: 7px;
+  font-size: 12px;
+  letter-spacing: 0;
+}
+.online-status {
+  min-height: 24px;
+  font-size: 13px;
+  color: #336b5b;
+  margin-bottom: 12px;
+}
+.online-status.is-error {
+  color: #ab402c;
+}
+.online-records,
+.online-players {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+}
+.online-records li {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid #d4dccf;
+  font-size: 12px;
+}
+.online-records li > span {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.online-records li > b {
+  color: #9aaa98;
+}
+.online-records .text-button {
+  font-size: 9px;
+  padding: 5px;
+}
+.online-join {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0 24px;
+}
+.online-join input {
+  flex: 1;
+  width: 100%;
+  font-size: 12px;
+}
+.online-join .secondary {
+  margin: 0;
+}
+.join-label {
+  display: block;
+  margin-top: 24px;
+}
+.room-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  border-top: 1px solid #b9c8b3;
+  padding-top: 15px;
+}
+.online-players li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0;
+  font-size: 13px;
+}
+.online-players i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.online-players span {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.online-players small {
+  font-size: 9px;
+  color: #718170;
+}
+.online-panel button:disabled {
+  opacity: 0.45;
+  cursor: wait;
+}
+.online-ghost-note {
+  color: #5f7e75;
+}
+#online-share {
+  display: block;
+  margin: 12px auto;
+}
+@media (max-width: 760px) {
+  .online-panel {
+    width: calc(100% - 24px);
+    padding: 24px 18px 80px;
+  }
+  .online-grid {
+    grid-template-columns: 1fr;
+  }
+  .online-card {
+    padding: 18px;
+  }
+  .online-identity {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .online-identity input {
+    width: 100%;
+  }
+  .online-records li {
+    gap: 7px;
+  }
+  .online-records .text-button {
+    max-width: 58px;
+  }
+  #header nav {
+    gap: 10px;
+  }
+  #header .nav-link {
+    font-size: 9px;
+  }
+}
+.online-panel {
+  color: #24382d;
+  padding: 32px 34px 80px;
+}
+.online-panel > p {
+  color: #607365;
+}
+.online-panel .eyebrow,
+.online-panel .tiny {
+  color: #647e6a;
+}
+.online-panel .secondary {
+  border-color: #adbea7;
+}
+.online-panel .primary {
+  color: #fdf8ed;
+}
+.online-panel .text-button {
+  color: #3f6b58;
+}
+.online-panel em {
+  color: #d8623f;
+}
+.online-join .secondary {
+  width: auto;
+  flex: 0 0 auto;
+  padding: 10px 18px;
+}
+.online-panel {
+  height: calc(100dvh - 126px);
+}
+.online-panel .online-card .primary {
+  color: #fff;
+}
+@media (max-width: 760px) {
+  .online-panel {
+    padding: 26px 18px 60px;
+    height: calc(100dvh - 118px);
+  }
+  .online-panel > h2 {
+    margin: 20px 0;
+  }
+}

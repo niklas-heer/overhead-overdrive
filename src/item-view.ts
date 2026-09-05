@@ -17,7 +17,7 @@ export class ItemView {
   constructor(
     scene: THREE.Scene,
     private readonly items: ItemSystem,
-    private readonly vehicles: readonly THREE.Object3D[] = [],
+    private readonly vehicles: THREE.Object3D[] = [],
   ) {
     this.group.name = "race-equipment";
     scene.add(this.group);
@@ -416,6 +416,9 @@ export class ItemView {
     f.mesh.removeFromParent();
     f.mesh.geometry.dispose();
     (f.mesh.material as THREE.Material).dispose();
+  }
+  setVehicle(index: number, vehicle: THREE.Object3D) {
+    this.vehicles[index] = vehicle;
   }
   dispose() {
     this.group.removeFromParent();

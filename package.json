@@ -5,11 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && tsc --noEmit -p tsconfig.server.json && vite build",
+    "dev:online": "tsx scripts/dev-online.ts",
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "test:ai": "node scripts/check-ai.ts",
     "test:browser": "node scripts/browser-smoke.mjs",
+    "test:security": "node scripts/security-smoke.mjs",
     "format": "prettier --write src scripts index.html vite.config.ts"
   },
   "dependencies": {
@@ -17,8 +19,10 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.55.1",
+    "@types/node": "^22.20.1",
     "@types/three": "^0.180.0",
     "prettier": "^3.9.6",
+    "tsx": "^4.23.13",
     "typescript": "^5.9.3",
     "vite": "^7.1.7",
     "vitest": "^3.2.4"

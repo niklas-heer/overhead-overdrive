@@ -35,7 +35,7 @@ const clamp = (n: number, lo: number, hi: number) =>
 const moveToward = (value: number, target: number, delta: number) =>
   value + clamp(target - value, -delta, delta);
 
-type Dynamics = {
+export type VehicleDynamics = {
   accumulator: number;
   rollVelocity: number;
   pitchVelocity: number;
@@ -43,7 +43,18 @@ type Dynamics = {
   overheated: boolean;
   wasBraking: boolean;
 };
+type Dynamics = VehicleDynamics;
 const dynamics = new WeakMap<VehicleState, Dynamics>();
+/** Include the spring and boost hysteresis in authoritative race snapshots. */
+export function snapshotVehicleDynamics(state: VehicleState): VehicleDynamics {
+  return { ...internals(state) };
+}
+export function restoreVehicleDynamics(
+  state: VehicleState,
+  value: VehicleDynamics,
+): void {
+  dynamics.set(state, { ...value });
+}
 function internals(state: VehicleState): Dynamics {
   let value = dynamics.get(state);
   if (!value) {

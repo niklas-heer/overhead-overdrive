@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import * as THREE from "three";
 import { createVehicle } from "./physics";
+import { attachRider } from "./rider";
 import { animateProjector } from "./personality";
 function rig() {
   const root = new THREE.Group();
@@ -64,4 +65,25 @@ describe("expressive projector rig", () => {
       animateProjector(r.root, s, 1 / 120, 2 + i / 120, options);
     expect(Math.abs(r.head.rotation.x)).toBeLessThan(0.001);
   });
+});
+
+it("keeps the rider deck above ground at combined maximum pitch and roll", () => {
+  const r = rig(),
+    s = createVehicle(0, 0, 0);
+  const rider = attachRider(r.root);
+  for (const pitch of [-0.27, 0.27])
+    for (const roll of [-0.36, 0.36]) {
+      s.pitch = pitch;
+      s.roll = roll;
+      animateProjector(r.root, s, 1 / 60, 1, options);
+      r.root.updateMatrixWorld(true);
+      for (const x of [-0.46, 0.46])
+        for (const z of [-1.34, -0.58]) {
+          const point = r.body.localToWorld(new THREE.Vector3(x, 0.3425, z));
+          expect(point.y).toBeGreaterThan(0);
+        }
+      expect(s.pitch).toBe(pitch);
+      expect(s.roll).toBe(roll);
+    }
+  rider.dispose();
 });

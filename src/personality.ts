@@ -42,8 +42,15 @@ export function animateProjector(
   const follow = 1 - Math.exp(-Math.min(dt, 0.06) * 9);
   const idle = options.idle ? Math.sin(time * 1.1) : 0;
   if (rig.body) {
-    rig.body.rotation.x = state.pitch;
-    rig.body.rotation.z = -state.roll;
+    // Limit cosmetic body lean before the longer rider deck could scrape through
+    // the floor. Controls and the underlying vehicle dynamics remain unchanged.
+    const deckLever =
+      Math.abs(state.pitch) * 1.34 + Math.abs(state.roll) * 0.46;
+    const tilt = rig.body.getObjectByName("rider")
+      ? Math.min(1, 0.28 / Math.max(0.28, deckLever))
+      : 1;
+    rig.body.rotation.x = state.pitch * tilt;
+    rig.body.rotation.z = -state.roll * tilt;
   }
   if (rig.mast) rig.mast.rotation.z = state.wobble + idle * 0.015;
   if (rig.head) {

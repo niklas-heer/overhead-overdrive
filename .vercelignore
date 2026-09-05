@@ -1,7 +1,7 @@
-node_modules/
-dist/
+docs/
+models/
 test-results/
 playwright-report/
-.DS_Store
-.vercel/
 .env*
+.git/
+.github/

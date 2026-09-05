@@ -930,7 +930,7 @@ export function buildWorld(scene: THREE.Scene, track: Track) {
         grid,
       );
   for (const side of [-1, 1]) {
-    box(side * (track.width / 2 + 1.15), 2.8, 0, 0.2, 5.6, 0.2, steel, grid);
+    box(side * (track.width / 2 + 1.15), 3.5, 0, 0.2, 7.0, 0.2, steel, grid);
     box(
       side * (track.width / 2 + 1.15),
       0.15,
@@ -942,7 +942,7 @@ export function buildWorld(scene: THREE.Scene, track: Track) {
       grid,
     );
   }
-  box(0, 5.45, 0, track.width + 2.5, 0.7, 0.3, steel, grid);
+  box(0, 6.85, 0, track.width + 2.5, 0.7, 0.3, steel, grid);
   const banner = label(
     "OVERHEAD / OVERDRIVE",
     track.width + 2,
@@ -951,7 +951,7 @@ export function buildWorld(scene: THREE.Scene, track: Track) {
     "#e7be4a",
     78,
   );
-  banner.position.set(0, 5.45, -0.17);
+  banner.position.set(0, 6.85, -0.17);
   banner.rotation.y = Math.PI;
   grid.add(banner);
   const bannerBack = banner.clone();
@@ -959,7 +959,7 @@ export function buildWorld(scene: THREE.Scene, track: Track) {
   bannerBack.rotation.y = 0;
   grid.add(bannerBack);
   for (let i = 0; i < 4; i++)
-    box((i - 1.5) * 0.4, 4.9, 0, 0.2, 0.17, 0.3, glow, grid);
+    box((i - 1.5) * 0.4, 6.3, 0, 0.2, 0.17, 0.3, glow, grid);
   for (const t of [0.15, 0.38, 0.6, 0.82]) {
     const p = curve.getPointAt(t),
       tan = curve.getTangentAt(t),
