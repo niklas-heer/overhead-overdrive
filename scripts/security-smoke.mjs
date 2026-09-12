@@ -40,7 +40,7 @@ try {
       });
     });
     // Browser storage is untrusted, even though it is not an online score source.
-    localStorage.setItem("overdrive-v3-best-atrium-0", "Infinity");
+    localStorage.setItem("overdrive-v4-best-atrium-0", "Infinity");
     localStorage.setItem("overdrive-crew-v1", '{"index":-100,"enabled":"yes"}');
   });
   await page.goto(url);

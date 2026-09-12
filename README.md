@@ -73,7 +73,7 @@ The live smoke uses two independent browser sessions and the actual API, then dr
 
 - Three circuits: **Atrium Circuit** (192 m), **Canopy Run** (255 m), and **Kocher Park** (316 m).
 - Three-lap races against three opponents using the same vehicle dynamics as the player: The Prefect takes precise lines, Turbo Tutor boosts and overtakes, and Loose Caster makes brief drifting turns.
-- Sequential checkpoints, exact finish-line crossing, finishing-order tracking, race timer, and local personal bests per track and setup.
+- Every racer crosses the same ordered gates in the forward direction for three full laps. The standings show each rival’s lap or verified finish; finished rivals leave the track, and unfinished rivals receive no podium place. After you finish, your time locks while remaining rivals keep driving their own laps; the results update as they cross the finish. A stuck rival is marked DNF when the time limit expires (at least three minutes of racing and sixty seconds after your finish). Local personal bests are tracked per course and setup.
 - Four selectable colored 3D stick-figure riders: **The Doodler**, **Lab Partner**, **Lunch Break**, and **Night Shift**. Choose in **The Garage**; the **Classic** toggle restores the rider-free projector. Crew selection is remembered locally.
 - Riders stand on rear footboards, grip the trolley handle, lean into corners, crouch under boost, react to laser hits and wave at the finish. Hands and feet remain attached through animation. Round heads, slim capsule limbs and simple faces keep the driving view clear.
 - Brief comic asides react to driving, with at most two bubbles and a ten-second per-rider cooldown.
@@ -103,7 +103,7 @@ The live smoke uses two independent browser sessions and the actual API, then dr
 | Space | Hold with steering and throttle to charge a drift; release for a caster kick |
 | Shift | Lamp overdrive |
 | E / Q / click item slot | Fire laser or use held power-up |
-| R | Recover at the last checkpoint (+2 seconds during a race) |
+| R | Recover at the last checkpoint (two-second stop and empty boost offline; +2 seconds online) |
 | C | Switch chase / overhead camera |
 | Esc | Pause / resume |
 | Enter | Start from track selection |
@@ -118,7 +118,7 @@ Rider selection changes appearance and animation; handling, collision shapes and
 
 **Atrium Circuit** is the indoor school hall: white brick, graphite tiles, yellow stairs, glass roof and galleries. **Canopy Run** threads an asymmetric route between separate school wings, a red-column covered passage, courtyards and curved bicycle shelters. **Kocher Park** leaves the forecourt for a wooded pond loop and the riverbank. Each has different geometry, scenery, turn rhythm and lap length. The source photographs and maps informed the architecture and setting; the route connections and dimensions remain adapted for racing.
 
-The drift/mischief update uses a new local-record key (v3), so times with the new speed rewards do not compete with earlier handling. Previous records remain in browser storage.
+The race-integrity update uses a new offline record key (v4): strict forward gate crossings and equal two-second recovery stops replace the earlier checkpoint-radius and recovery rules. Previous records remain in browser storage and are kept separate. Online time-trial rules and records are unchanged.
 
 ## School model and photographs
 
@@ -135,8 +135,8 @@ This is an arcade vehicle model with physically motivated behavior. Wheels do no
 ## Checks
 
 ```sh
-npm test                 # 112 gameplay, tilt, online and security tests
-npm run test:ai          # 9 full AI race simulations against actual world colliders
+npm test                 # 117 gameplay, race-progress, tilt, online and security tests
+npm run test:ai          # 9 full AI races, checking every gate, lap split and driven distance
 AI_PACK=1 npm run test:ai # also validate 9 three-rival pack completions
 npm run build            # strict TypeScript + production bundle
 ```
@@ -148,6 +148,7 @@ npx playwright install chromium webkit
 npm run test:mobile      # portrait/landscape touch, interruptions and simulated tilt
 npm run test:browser     # menu, garage, controls, pause, recovery, tracks, tour, mobile
 node scripts/steering-smoke.mjs # driver-relative A/D and arrow-key regression
+node scripts/race-integrity-smoke.mjs # full AI races in WebKit, actual gate/distance audit and recovery
 node scripts/race-smoke.mjs    # keyboard-driven race with item use, finish + saved record
 node scripts/items-smoke.mjs   # real pickup, laser, item UI, sound, pause/restart
 node scripts/drift-smoke.mjs   # real keyboard drift charge/release, pulse and HUD
@@ -163,6 +164,7 @@ Browser scripts default to port 5173. `GAME_URL` overrides the URL for all brows
 - `src/main.ts`: menu, race lifecycle, cameras, controls, HUD and export.
 - `src/items.ts` / `src/item-view.ts`: tested item rules, inventory, beam hits, shields and visual effects.
 - `src/rivals.ts`: distinct rival handling, driving lines, passing and boost decisions.
+- `src/race-progress.ts`: shared offline player/AI gate validation and per-lap timing.
 - `src/audio.ts`: original fan/rolling sound design and short item effects.
 - `src/physics.ts`: dependency-free vehicle dynamics and contact response.
 - `src/world.ts`: circuits, original school geometry/materials and projector model.

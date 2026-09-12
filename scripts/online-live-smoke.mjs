@@ -146,7 +146,7 @@ try {
     .waitFor({ timeout: 30000 });
   assert.equal(
     await host.evaluate(() =>
-      localStorage.getItem("overdrive-v3-best-atrium-1"),
+      localStorage.getItem("overdrive-v4-best-atrium-1"),
     ),
     null,
   );

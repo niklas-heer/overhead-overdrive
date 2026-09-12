@@ -52,11 +52,57 @@ try {
   );
   const result = await page.evaluate(() => ({
     game: window.__OVERDRIVE__,
-    best: localStorage.getItem("overdrive-v3-best-atrium-1"),
+    best: localStorage.getItem("overdrive-v4-best-atrium-1"),
   }));
   assert.equal(result.game.laps, 3);
+  assert.equal(result.game.gatesPassed, result.game.gateCount * 3);
+  assert.equal(result.game.lapTimes.length, 3);
+  const podiumNames = await page
+    .locator(".podium-place > span")
+    .allTextContents();
+  for (const rival of result.game.rivals) {
+    if (!rival.finished) {
+      assert.ok(
+        !podiumNames.includes(rival.name),
+        "Unfinished rivals cannot get a podium place",
+      );
+      assert.match(
+        await page.locator(".race-classification").innerText(),
+        new RegExp(`${rival.name}.*STILL RACING`),
+      );
+    }
+  }
   assert.ok(Number(result.best) > 0);
   assert.ok(await page.locator("#results").innerText());
+  await page.screenshot({ path: "/tmp/overdrive-finish-pending.png" });
+  await page.waitForFunction(
+    () => window.__OVERDRIVE__.raceClosed,
+    {},
+    { timeout: 150000 },
+  );
+  const classified = await page.evaluate(() => window.__OVERDRIVE__);
+  assert.ok(
+    classified.rivals.every(
+      (r) =>
+        r.finished &&
+        r.laps === 3 &&
+        r.gatesPassed === classified.gateCount * 3,
+    ),
+    "All rivals actually finish after the player",
+  );
+  assert.equal(await page.locator(".podium-place").count(), 3);
+  assert.ok(
+    !(await page.locator(".race-classification").innerText()).includes(
+      "STILL RACING",
+    ),
+  );
+  assert.equal(
+    await page.evaluate(() =>
+      localStorage.getItem("overdrive-v4-best-atrium-1"),
+    ),
+    result.best,
+    "Waiting for AI never changes the player time",
+  );
   await page.screenshot({ path: "/tmp/overdrive-finish.png" });
   await page.getByRole("button", { name: "ONE MORE RACE" }).click();
   assert.equal((await page.evaluate(() => window.__OVERDRIVE__)).laps, 0);

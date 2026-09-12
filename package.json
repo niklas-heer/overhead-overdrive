@@ -10,6 +10,7 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "vitest run",
     "test:ai": "node scripts/check-ai.ts",
+    "test:race-integrity": "node scripts/race-integrity-smoke.mjs",
     "test:browser": "node scripts/browser-smoke.mjs",
     "test:mobile": "node scripts/mobile-smoke.mjs",
     "test:security": "node scripts/security-smoke.mjs",

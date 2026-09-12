@@ -11,6 +11,13 @@ import {
 } from "./physics";
 import "./style.css";
 import { TiltInput } from "./tilt";
+import {
+  advanceRaceProgress,
+  createRaceProgress,
+  lapStatus,
+  type Gate,
+  type RaceProgress,
+} from "./race-progress";
 import { CasterTrails, DriftSparks } from "./effects";
 import { attachRider, animateRider, RIDERS } from "./rider";
 import { RiderFeedback } from "./rider-feedback";
@@ -31,19 +38,19 @@ import {
 } from "./online-race";
 
 type Mode = "menu" | "countdown" | "race" | "tour" | "paused" | "finish";
-type Racer = {
+type Racer = RaceProgress & {
   state: VehicleState;
   mesh: THREE.Group;
   name: string;
   color: string;
-  checkpoint: number;
-  laps: number;
   finished: boolean;
   finishTime: number;
   stuck: number;
   brain: ReturnType<typeof createRivalBrain>;
   itemTimer: number;
   recoveryGrace: number;
+  recoveries: number;
+  previous: { x: number; z: number };
 };
 const app = document.querySelector<HTMLDivElement>("#app")!;
 app.innerHTML = `
@@ -186,6 +193,9 @@ let racers: Racer[] = [],
 const tilt = new TiltInput();
 let tiltEnabled = false;
 let tiltTimeout: ReturnType<typeof setTimeout> | undefined;
+let gates: Gate[] = [];
+let raceClosed = false;
+let finishSignature = "";
 const keys = new Set<string>();
 // Track fingers independently from the keyboard and from other fingers on a button.
 const touchPointers = new Map<number, HTMLButtonElement>();
@@ -208,7 +218,7 @@ function recoverPlayer() {
   if (onlineKind) pendingRecover = true;
   else recover(racers[0]);
 }
-const bestKey = () => `overdrive-v3-best-${selected.id}-${setupIndex}`;
+const bestKey = () => `overdrive-v4-best-${selected.id}-${setupIndex}`;
 const getBest = () => {
   try {
     const best = Number(localStorage.getItem(bestKey()) || 0);
@@ -291,6 +301,10 @@ function loadTrack(track: Track) {
     { length: Math.max(20, Math.round(length / 5)) },
     (_, i) => world.curve.getPointAt(i / Math.max(20, Math.round(length / 5))),
   );
+  gates = checkpoints.map((p, i) => {
+    const h = world.curve.getTangentAt(i / checkpoints.length);
+    return { x: p.x, z: p.z, dx: h.x, dz: h.z };
+  });
   const colors = [color, ...RIVAL_PROFILES.map((p) => p.color)];
   const names = ["YOU", ...RIVAL_PROFILES.map((p) => p.name)];
   for (let i = 0; i < 4; i++) {
@@ -307,8 +321,9 @@ function loadTrack(track: Track) {
       mesh,
       name: names[i],
       color: colors[i],
-      checkpoint: 1,
-      laps: 0,
+      ...createRaceProgress(),
+      previous: { x, z },
+      recoveries: 0,
       finished: false,
       finishTime: Infinity,
       stuck: 0,
@@ -514,6 +529,8 @@ function startRace(tour = false) {
   hidden("online", true);
   loadTrack(selected);
   raceTime = 0;
+  raceClosed = false;
+  finishSignature = "";
   hitFlash = 0;
   lastEventText = "";
   driftReleases = 0;
@@ -566,13 +583,19 @@ function pause() {
       ? "LEAVE RACE"
       : "RESTART " + (previousMode === "tour" ? "FREE DRIVE" : "RACE");
 }
-function recover(racer: Racer, penalize = true) {
+function recover(racer: Racer) {
+  if (racer.finished || racer.recoveryGrace > 0) return;
   const index =
     (racer.checkpoint - 1 + checkpoints.length) % checkpoints.length;
   const p = checkpoints[index],
     tangent = world.curve.getTangentAt(index / checkpoints.length);
   racer.state = createVehicle(p.x, p.z, Math.atan2(tangent.x, tangent.z));
-  racer.recoveryGrace = 1.2;
+  // The same two seconds stationary and empty boost tank apply to every racer.
+  racer.state.boost = 0;
+  racer.recoveryGrace = 2;
+  racer.recoveries++;
+  racer.stuck = 0;
+  racer.previous = { x: racer.state.x, z: racer.state.z };
   if (items) {
     const e = items.equipment[racers.indexOf(racer)];
     e.state = racer.state;
@@ -580,10 +603,9 @@ function recover(racer: Racer, penalize = true) {
     e.turbo = 0;
     e.immunity = 2;
   }
-  if (racer === racers[0] && penalize && mode === "race") {
-    raceTime += 2;
+  if (racer === racers[0] && mode === "race") {
     recoverPenalty = 2.5;
-    $("race-message").textContent = "BACK ON YOUR CASTERS · +2 SEC";
+    $("race-message").textContent = "RECOVERING · 2 SECOND STOP";
   }
 }
 function finish() {
@@ -591,8 +613,9 @@ function finish() {
   riderFeedback.clear();
   audio.bell();
   const previous = getBest();
-  const isBest = !previous || raceTime < previous;
-  if (isBest) saveBest(raceTime);
+  const resultTime = racers[0].finishTime;
+  const isBest = !previous || resultTime < previous;
+  if (isBest) saveBest(resultTime);
   hidden("overlay", false);
   $("overlay-tag").textContent = isBest
     ? "NEW PERSONAL BEST"
@@ -601,29 +624,59 @@ function finish() {
     getPosition() === 1 ? "Top of the class." : "Gloriously unqualified.";
   $("overlay-copy").textContent =
     `${selected.name} · ${setups[setupIndex].name} · ${ridersEnabled ? RIDERS[riderIndex].name : "Classic"} · 3 laps · ${items.equipment[0].hits} laser hits`;
+  renderFinishResults();
+  hidden("resume", true);
+  $("restart").textContent = "ONE MORE RACE";
+}
+function renderFinishResults() {
+  const signature = [
+    raceClosed,
+    ...racers.map((r) => `${r.laps}:${r.finished}`),
+  ].join("|");
+  if (signature === finishSignature) return;
+  finishSignature = signature;
+  const resultTime = racers[0].finishTime;
+  const isBest = $("overlay-tag").textContent === "NEW PERSONAL BEST";
   const podium = racers
     .map((r, i) => ({ r, i }))
-    .sort((a, b) =>
-      a.r.finished && b.r.finished
-        ? a.r.finishTime - b.r.finishTime
-        : a.r.finished
-          ? -1
-          : b.r.finished
-            ? 1
-            : progress(b.r) - progress(a.r),
-    )
+    .filter(({ r }) => r.finished)
+    .sort((a, b) => a.r.finishTime - b.r.finishTime)
     .slice(0, 3);
   $("results").innerHTML =
     `<div class="book-podium" aria-label="Race podium">${[1, 0, 2]
       .map((index) => {
+        if (!podium[index]) return "";
         const { r, i } = podium[index];
         return `<div class="podium-place place-${index + 1}" style="--racer:${r.color}"><div class="podium-machine" aria-hidden="true"><i></i><b></b>${ridersEnabled ? `<em class="podium-rider" style="--shirt:${RIDERS[(riderIndex + i) % RIDERS.length].colors.top};--skin:${RIDERS[(riderIndex + i) % RIDERS.length].colors.skin}"><span></span></em>` : ""}</div><span>${i === 0 ? "YOU" : r.name}</span><div class="book-stack"><strong>${index + 1}</strong><small>${["ADVANCED CHAOS", "APPLIED WOBBLE", "LOOSE SCREWS"][index]}</small></div></div>`;
       })
       .join(
         "",
-      )}</div><div class="result-awards"><span><b>${driftReleases}</b> CASTER KICKS</span><span><b>${items.equipment[0].hits}</b> LASER TAGS</span><span><b>${momentCount}</b> MISCHIEF MOMENTS</span></div><div class="result-time">${format(raceTime)}</div><p>FINISHED ${ordinal(getPosition())} / 4${isBest ? " · YOUR FASTEST RUN YET" : ""}</p>`;
-  hidden("resume", true);
-  $("restart").textContent = "ONE MORE RACE";
+      )}</div><div class="result-awards"><span><b>${driftReleases}</b> CASTER KICKS</span><span><b>${items.equipment[0].hits}</b> LASER TAGS</span><span><b>${momentCount}</b> MISCHIEF MOMENTS</span></div><div class="result-time">${format(resultTime)}</div><p>FINISHED ${ordinal(getPosition())} / 4${isBest ? " · YOUR FASTEST RUN YET" : ""}</p>`;
+  const classification = document.createElement("div");
+  classification.className = "race-classification";
+  classification.setAttribute("aria-label", "Verified race results");
+  [...racers]
+    .sort((a, b) =>
+      a.finished && b.finished
+        ? a.finishTime - b.finishTime
+        : a.finished
+          ? -1
+          : b.finished
+            ? 1
+            : progress(b) - progress(a),
+    )
+    .forEach((r) => {
+      const row = document.createElement("p");
+      row.textContent = `${r.name} · ${r.finished ? `${format(r.finishTime)} · 3/3 LAPS` : raceClosed ? `DID NOT FINISH · ${r.laps}/3 LAPS COMPLETED` : `STILL RACING · ${lapStatus(r.laps, false)}`}`;
+      classification.append(row);
+    });
+  $("results").append(classification);
+  const waiting = document.createElement("p");
+  waiting.className = "finish-waiting";
+  waiting.textContent = raceClosed
+    ? "CLASSIFICATION COMPLETE"
+    : "YOUR TIME IS LOCKED · RIVALS ARE FINISHING THEIR LAPS";
+  $("results").append(waiting);
 }
 function ordinal(n: number) {
   return ["1ST", "2ND", "3RD", "4TH"][n - 1] || String(n);
@@ -654,40 +707,31 @@ function getPosition() {
       .indexOf(racers[0]) + 1
   );
 }
-function updateProgress(r: Racer) {
-  const target = checkpoints[r.checkpoint % checkpoints.length];
-  const startTangent = world.curve.getTangentAt(0);
-  const crossedLine =
-    r.checkpoint % checkpoints.length !== 0 ||
-    (r.state.x - target.x) * startTangent.x +
-      (r.state.z - target.z) * startTangent.z >=
-      0;
-  if (
-    crossedLine &&
-    Math.hypot(r.state.x - target.x, r.state.z - target.z) <
-      selected.width * 0.63
-  ) {
-    r.checkpoint++;
-    if (r.checkpoint > checkpoints.length) {
-      r.laps++;
-      r.checkpoint = 1;
-      if (r === racers[0]) {
-        audio.bell();
-        if (r.laps >= 3) {
-          r.finished = true;
-          r.finishTime = raceTime;
-          finish();
-        } else {
-          $("race-message").textContent =
-            r.laps === 2
-              ? "FINAL LAP · MAKE IT COUNT"
-              : "LAP 2 · CLASS IS IN SESSION";
-          recoverPenalty = 2.4;
-        }
-      } else if (r.laps >= 3) {
-        r.finished = true;
-        r.finishTime = raceTime;
-      }
+function updateProgress(r: Racer, dt: number) {
+  if (r.finished || r.recoveryGrace > 0) return;
+  const crossingTime = advanceRaceProgress(
+    r,
+    r.previous,
+    r.state,
+    gates,
+    selected.width * 0.63,
+    raceTime,
+    dt,
+  );
+  if (crossingTime === null) return;
+  if (r.laps >= 3) {
+    r.finished = true;
+    r.finishTime = crossingTime;
+    r.state.vx = r.state.vz = r.state.speed = 0;
+  }
+  if (r === racers[0]) {
+    audio.bell();
+    if (!r.finished) {
+      $("race-message").textContent =
+        r.laps === 2
+          ? "FINAL LAP · MAKE IT COUNT"
+          : "LAP 2 · CLASS IS IN SESSION";
+      recoverPenalty = 2.4;
     }
   }
 }
@@ -714,9 +758,14 @@ function step(dt: number) {
     }
     return;
   }
-  if (mode !== "race" && mode !== "tour") return;
+  if (mode !== "race" && mode !== "tour" && mode !== "finish") return;
+  if (mode === "finish" && raceClosed) return;
   raceTime += dt;
-  racers.forEach((r) => (r.recoveryGrace = Math.max(0, r.recoveryGrace - dt)));
+  racers.forEach((r) => {
+    r.previous.x = r.state.x;
+    r.previous.z = r.state.z;
+    r.recoveryGrace = Math.max(0, r.recoveryGrace - dt);
+  });
   const input: Input = {
     throttle:
       isDown("KeyW") || isDown("ArrowUp")
@@ -737,12 +786,13 @@ function step(dt: number) {
   }
   const beforeCharge = player.state.driftCharge;
   const beforeTurbo = player.state.driftTurbo;
-  stepVehicle(player.state, input, dt, setups[setupIndex]);
+  if (!player.finished && player.recoveryGrace === 0)
+    stepVehicle(player.state, input, dt, setups[setupIndex]);
   collide(player);
-  if (mode === "race") {
+  if (mode === "race" || mode === "finish") {
     for (let i = 1; i < racers.length; i++) {
       const r = racers[i];
-      if (r.finished) continue;
+      if (r.finished || r.recoveryGrace > 0) continue;
       const target = checkpoints[r.checkpoint % checkpoints.length];
       const ai = driveRival(
         r.brain,
@@ -798,10 +848,9 @@ function step(dt: number) {
       collide(r);
       r.stuck = Math.abs(r.state.speed) < 0.7 ? r.stuck + dt : 0;
       if (r.stuck > 3.5) {
-        recover(r, false);
+        recover(r);
         r.stuck = 0;
       }
-      updateProgress(r);
     }
     for (let i = 0; i < racers.length; i++)
       for (let j = i + 1; j < racers.length; j++) {
@@ -835,19 +884,32 @@ function step(dt: number) {
           }
         }
       }
-    updateProgress(player);
+    // Judge everyone after movement and contacts, then classify the finish together.
+    racers.forEach((r) => updateProgress(r, dt));
+    if (player.finished && mode === "race") finish();
+    if (mode === "finish") {
+      // Keep simulating real driving after the player's finish; a time limit bounds a stuck rival.
+      raceClosed =
+        racers.every((r) => r.finished) ||
+        raceTime >= Math.max(180, player.finishTime + 60);
+    }
   }
   items.equipment.forEach((equipment, i) => {
-    equipment.active = !racers[i].finished && (mode !== "tour" || i === 0);
+    equipment.active =
+      !racers[i].finished &&
+      racers[i].recoveryGrace === 0 &&
+      (mode !== "tour" || i === 0);
   });
+  const activeMischief = racers.filter(
+    (r, i) =>
+      !r.finished && r.recoveryGrace === 0 && (mode !== "tour" || i === 0),
+  );
   for (const event of mischief.update(
     dt,
-    racers
-      .filter((r, i) => !r.finished && (mode !== "tour" || i === 0))
-      .map((r) => r.state),
+    activeMischief.map((r) => r.state),
     true,
   )) {
-    if (event.racerIndex === 0 && !player.finished) {
+    if (activeMischief[event.racerIndex] === player) {
       momentCount++;
       audio.mischief();
       if (recoverPenalty <= 0) announce(event.title, 1.4);
@@ -941,7 +1003,7 @@ function syncModels(time: number, dt = 0) {
           ? i === 0
           : mode === "tour"
             ? i === 0
-            : true;
+            : i === 0 || !r.finished;
     if (onlineKind === "room" && dt > 0 && mode !== "menu") {
       r.mesh.position.lerp(
         new THREE.Vector3(s.x, 0.055, s.z),
@@ -1048,6 +1110,7 @@ function drawMap() {
   for (let i = racers.length - 1; i >= 0; i--) {
     if ((mode === "tour" || onlineKind === "trial") && i > 0) continue;
     const r = racers[i];
+    if (i > 0 && r.finished) continue;
     ctx.beginPath();
     ctx.arc(
       ox + (r.state.x - minX) * scale,
@@ -1068,6 +1131,7 @@ function drawMap() {
 let uiFrame = 0;
 function updateHUD() {
   if (++uiFrame % 3) return;
+  if (!onlineKind && mode === "finish") renderFinishResults();
   const s = racers[0].state;
   const e = items.equipment[0],
     info = e.item ? ITEM_INFO[e.item] : null;
@@ -1107,7 +1171,7 @@ function updateHUD() {
             )
             .map(
               ({ r, i }, place) =>
-                `<div class="standing ${i === 0 ? "you" : ""}"><b>${place + 1}</b><i style="background:${r.color}"></i><span>${r.name}<small>${i === 0 ? setups[setupIndex].tag : RIVAL_PROFILES[i - 1].style}</small></span>${items.equipment[i].shield > 0 ? "◇" : items.equipment[i].item === "laser" ? "↗" : ""}</div>`,
+                `<div class="standing ${i === 0 ? "you" : ""}"><b>${place + 1}</b><i style="background:${r.color}"></i><span>${r.name}<small>${r.recoveryGrace > 0 ? "RECOVERING · 2 SEC" : lapStatus(r.laps, r.finished)}</small></span>${items.equipment[i].shield > 0 ? "◇" : items.equipment[i].item === "laser" ? "↗" : ""}</div>`,
             )
             .join("");
   if (onlineKind) renderOnlineStandings();
@@ -1149,7 +1213,9 @@ function updateHUD() {
         : "GOLD CHEVRONS · A CHEEKY SPEED KICK";
   if (onlineKind === "trial")
     $("next-turn").textContent = "BOOST & CASTER KICKS · RECOVER +2 SEC";
-  $("timer").textContent = format(raceTime);
+  $("timer").textContent = format(
+    racers[0].finished ? racers[0].finishTime : raceTime,
+  );
   $("lap").textContent =
     mode === "tour"
       ? "FREE DRIVE"
@@ -1700,6 +1766,7 @@ function applyOnlineRace() {
     r.laps = p.laps;
     r.finished = p.finished;
     r.finishTime = (p.finishTicks ?? Infinity) / 120;
+    r.recoveries = p.recoveries;
     r.name = p.name;
     r.color = p.color;
     Object.assign(items.equipment[i], p.equipment, { state: r.state });
@@ -1840,6 +1907,9 @@ function renderOnlineStandings() {
       dot.style.background = r.color;
       const name = document.createElement("span");
       name.textContent = r.name;
+      const status = document.createElement("small");
+      status.textContent = lapStatus(r.laps, r.finished);
+      name.append(status);
       row.append(rank, dot, name);
       list.append(row);
     });
@@ -1929,7 +1999,7 @@ async function finishOnline(completed = true) {
       .sort((a, b) => a.finishTime - b.finishTime)
       .forEach((r, i) => {
         const line = document.createElement("p");
-        line.textContent = `${i + 1}. ${r.name} · ${r.finished ? format(r.finishTime) : "Still rolling"}`;
+        line.textContent = `${r.finished ? `${i + 1}.` : "DNF"} ${r.name} · ${r.finished ? `${format(r.finishTime)} · 3/3 LAPS` : `${r.laps}/3 LAPS COMPLETED`}`;
         $("results").append(line);
       });
   }
@@ -2173,12 +2243,26 @@ Object.defineProperty(window, "__OVERDRIVE__", {
     quizTargets: items.targets.map((p) => ({ ...p })),
     rivals: racers.slice(1).map((r, i) => ({
       name: r.name,
+      finished: r.finished,
+      finishTime: r.finishTime,
+      visible: r.mesh.visible,
+      gatesPassed: r.gatesPassed,
+      lapTimes: [...r.lapTimes],
+      recoveries: r.recoveries,
+      recoverySeconds: r.recoveryGrace,
       style: RIVAL_PROFILES[i].style,
       state: { ...r.state },
       laps: r.laps,
       checkpoint: r.checkpoint,
       item: items.equipment[i + 1].item,
     })),
+    raceClosed,
+    trackLength: world.curve.getLength(),
+    gateCount: gates.length,
+    gatesPassed: racers[0].gatesPassed,
+    lapTimes: [...racers[0].lapTimes],
+    recoveries: racers[0].recoveries,
+    recoverySeconds: racers[0].recoveryGrace,
     checkpoint: racers[0].checkpoint,
     laps: racers[0].laps,
     renderCalls: renderer.info.render.calls,
