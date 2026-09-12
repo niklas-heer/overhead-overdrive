@@ -22,6 +22,16 @@ npm run build
 npm run preview
 ```
 
+## Play on iPhone and iPad
+
+Open the game in Safari on iPhone or iPad, choose a circuit and tap **Let’s Roll**. Portrait, landscape and narrow iPad Split View layouts work. Hold **GO** to accelerate, use **◀ / ▶** to steer and **↓** to brake/reverse. You can hold multiple buttons together for **DRIFT** and **BOOST**. Tap the supply card to use an item; **RECOVER**, **CAMERA** and pause are also on screen.
+
+For motion steering, tap **TILT OFF** during a race, allow Motion and Orientation access, and hold the phone in a comfortable neutral position. Then tilt left/right while holding **GO**. Toggle tilt off/on to recenter. Touch arrows override tilt when held. Rotation pauses the game; resume in your new grip to recalibrate. Offline tilt is proportional; online races use left/right steering to match their existing verified input format.
+
+Tilt requires HTTPS on iPhone and iPad. Use the deployed HTTPS game or an HTTPS development preview; opening Vite through your computer’s local-network HTTP address supports touch controls but not motion access. Declined permissions or missing sensors leave touch controls available. Motion readings stay in the browser; online play sends ordinary steering commands.
+
+Automated checks cover WebKit and Chromium with iPhone and iPad touch viewports and simulated sensor readings. Physical iPhone/iPad sensor feel, Safari browser chrome and sustained performance still need a device check.
+
 ## Deploy to Vercel
 
 Live game: [overhead-overdrive.vercel.app](https://overhead-overdrive.vercel.app).
@@ -73,7 +83,7 @@ The live smoke uses two independent browser sessions and the actual API, then dr
 - Gold-chevron mischief lanes: flying worksheets and wobbling books in the atrium, rumble strips under the canopy, and leaf bursts in the park. Each gives a bounded speed kick and lamp recharge. A nervous cleaning robot yields to approaching racers.
 - Visible skid trails, a flexing mast, acceleration squat, impact wobble, quadratic drag, and rechargeable lamp boost with thermal lockout.
 - Chase and overhead cameras, minimap, recovery, pause, restart, and untimed free driving.
-- Keyboard, clickable item slot, and small-screen touch driving controls.
+- Keyboard, clickable item slot, and iPhone/iPad touch controls in portrait and landscape, with optional tilt steering.
 - Collectible laser pointers (three shots), seven-second one-hit transparency shields, and two-second capacitor boosts. Press **E** or **Q** to use the equipped item.
 - Lasers tag rivals for a short slowdown. Temporary hit immunity prevents repeated stun-locking, scenery blocks beams, and glowing **POP QUIZ** targets recharge lamp energy when hit.
 - Rival name/position panel, item status display, brief hit feedback, and speed-sensitive camera framing.
@@ -125,7 +135,7 @@ This is an arcade vehicle model with physically motivated behavior. Wheels do no
 ## Checks
 
 ```sh
-npm test                 # 56 physics, items, rivals, rider, animation and mischief tests
+npm test                 # 112 gameplay, tilt, online and security tests
 npm run test:ai          # 9 full AI race simulations against actual world colliders
 AI_PACK=1 npm run test:ai # also validate 9 three-rival pack completions
 npm run build            # strict TypeScript + production bundle
@@ -134,7 +144,8 @@ npm run build            # strict TypeScript + production bundle
 With the dev server running in another terminal:
 
 ```sh
-npx playwright install chromium
+npx playwright install chromium webkit
+npm run test:mobile      # portrait/landscape touch, interruptions and simulated tilt
 npm run test:browser     # menu, garage, controls, pause, recovery, tracks, tour, mobile
 node scripts/steering-smoke.mjs # driver-relative A/D and arrow-key regression
 node scripts/race-smoke.mjs    # keyboard-driven race with item use, finish + saved record

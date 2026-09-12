@@ -37,7 +37,11 @@ export class GameAudio {
     if (!this.enabled) return;
     if (!this.context) this.initialize();
     const context = this.context!;
-    if (context instanceof AudioContext && context.state === "suspended") {
+    if (
+      context instanceof AudioContext &&
+      context.state !== "running" &&
+      context.state !== "closed"
+    ) {
       void context.resume().catch(() => {
         /* A later user gesture can resume it. */
       });

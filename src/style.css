@@ -2401,3 +2401,397 @@ h2 {
     margin: 20px 0;
   }
 }
+
+/* Touch racing, including iPhones in landscape and devices with a second pointer. */
+.touch-caption,
+#touch-actions {
+  display: none;
+}
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+#viewport,
+#hud,
+.overlay {
+  height: 100dvh;
+}
+body:has(#hud:not(.hidden)) {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+#hud:not(.hidden) ~ .overlay,
+#hud button {
+  touch-action: manipulation;
+}
+.overlay {
+  padding: calc(12px + var(--safe-top)) calc(12px + var(--safe-right))
+    calc(12px + var(--safe-bottom)) calc(12px + var(--safe-left));
+}
+.dialog {
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+@media (any-pointer: coarse), (max-width: 760px) {
+  body {
+    overflow-y: auto;
+  }
+  #header {
+    margin-left: max(12px, var(--safe-left));
+    margin-right: max(12px, var(--safe-right));
+    padding-top: var(--safe-top);
+    height: calc(78px + var(--safe-top));
+    gap: 12px;
+  }
+  #header nav {
+    margin-left: auto;
+    gap: 8px;
+  }
+  #header .nav-link {
+    min-height: 44px;
+    font-size: 9px;
+    letter-spacing: 0;
+  }
+  #menu,
+  .panel {
+    margin-left: max(16px, var(--safe-left));
+    margin-right: max(16px, var(--safe-right));
+  }
+  .panel {
+    width: auto;
+    height: calc(100dvh - 122px - var(--safe-top) - var(--safe-bottom));
+    padding-bottom: 48px;
+    overscroll-behavior: contain;
+  }
+  .sound {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    bottom: auto;
+    min-height: 44px;
+    background: #1b3032;
+    z-index: 6;
+  }
+  #footer {
+    margin-bottom: var(--safe-bottom);
+  }
+  .keys-caption,
+  .race-controls {
+    display: none;
+  }
+  .touch-caption {
+    display: block;
+    font-size: 11px;
+    line-height: 1.5;
+    color: #c1d1c6;
+    margin: 0;
+    max-width: 380px;
+  }
+  #menu {
+    padding-top: 54px;
+  }
+  input,
+  select,
+  .online-identity input,
+  .online-identity select,
+  .online-join input {
+    font-size: 16px;
+  }
+  #hud {
+    --control-bottom: calc(12px + var(--safe-bottom));
+    padding: calc(12px + var(--safe-top)) max(16px, var(--safe-right)) 12px
+      max(16px, var(--safe-left));
+  }
+  #hud button {
+    min-height: 44px;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  #pause {
+    min-width: 44px;
+  }
+  #touch-actions {
+    position: absolute;
+    display: flex;
+    gap: 6px;
+    top: calc(110px + var(--safe-top));
+    right: max(16px, var(--safe-right));
+  }
+  #touch-actions button {
+    width: auto;
+    padding: 8px;
+    font-size: 9px;
+    font-weight: 700;
+  }
+  #touch-controls {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: repeat(2, 52px);
+    gap: 8px;
+    position: absolute;
+    left: max(16px, var(--safe-left));
+    right: max(16px, var(--safe-right));
+    bottom: var(--control-bottom);
+    pointer-events: none;
+  }
+  #touch-controls button {
+    pointer-events: auto;
+    touch-action: none;
+    min-width: 0;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    border-radius: 8px;
+    background: #173034df;
+    border: 1px solid #d0ddc580;
+  }
+  #touch-controls [data-key="ArrowLeft"] {
+    grid-area: 2 / 1;
+  }
+  #touch-controls [data-key="ArrowRight"] {
+    grid-area: 2 / 2;
+  }
+  #touch-controls [data-key="ArrowDown"] {
+    grid-area: 2 / 3;
+  }
+  #touch-controls [data-key="Space"] {
+    grid-area: 1 / 1;
+  }
+  #touch-controls [data-key="ShiftLeft"] {
+    grid-area: 1 / 4;
+  }
+  #touch-controls [data-key="ArrowUp"] {
+    grid-area: 2 / 4;
+    background: var(--orange);
+    color: var(--ink);
+  }
+  #touch-controls button.held {
+    background: #f5cc65;
+    border-color: #fff1bd;
+    color: var(--ink);
+    transform: translateY(2px);
+  }
+  .hud-bottom {
+    bottom: calc(132px + var(--safe-bottom));
+    left: max(16px, var(--safe-left));
+    right: max(16px, var(--safe-right));
+  }
+  .item-slot {
+    top: auto;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    bottom: calc(268px + var(--safe-bottom));
+    width: min(290px, calc(100% - 32px));
+    min-height: 52px;
+    padding: 8px 12px;
+  }
+  #item-key {
+    display: none;
+  }
+  #status-badges {
+    bottom: calc(330px + var(--safe-bottom));
+  }
+  .standings {
+    top: calc(120px + var(--safe-top));
+    left: max(16px, var(--safe-left));
+  }
+  .race-sound {
+    top: calc(160px + var(--safe-top));
+    right: max(16px, var(--safe-right));
+  }
+}
+@media (any-pointer: coarse) and (orientation: landscape) {
+  #menu {
+    height: auto;
+    min-height: 0;
+    padding-top: 20px;
+  }
+  .hero h1 {
+    font-size: 64px;
+    margin: 12px 0;
+  }
+  .hero-meta,
+  .machine-label {
+    display: none;
+  }
+  .race-picker {
+    margin-top: 24px;
+  }
+  .launch-row {
+    flex-direction: row;
+  }
+  .launch-row .primary {
+    width: auto;
+    flex-shrink: 0;
+  }
+  .hud-top {
+    gap: 12px;
+  }
+  .position strong {
+    font-size: 44px;
+  }
+  .timing > strong {
+    font-size: 26px;
+  }
+  .timing #best,
+  .map-block,
+  .standings {
+    display: none;
+  }
+  #touch-controls {
+    grid-template-columns: 64px 64px 1fr 64px 64px;
+    grid-template-rows: repeat(2, 48px);
+  }
+  #touch-controls [data-key="ArrowDown"] {
+    grid-column: 4;
+  }
+  #touch-controls [data-key="ShiftLeft"],
+  #touch-controls [data-key="ArrowUp"] {
+    grid-column: 5;
+  }
+  #touch-actions {
+    top: calc(68px + var(--safe-top));
+  }
+  .hud-bottom {
+    top: calc(12px + var(--safe-top));
+    bottom: auto;
+    justify-content: center;
+  }
+  .speedometer {
+    width: 130px;
+  }
+  .speedometer strong {
+    font-size: 40px;
+  }
+  .speedometer > span:first-child {
+    font-size: 7px;
+  }
+  .speedometer .boost-track {
+    margin: 5px 0;
+  }
+  .race-sound {
+    top: calc(112px + var(--safe-top));
+    right: max(16px, var(--safe-right));
+    font-size: 8px;
+  }
+  .item-slot {
+    bottom: var(--control-bottom);
+    width: clamp(180px, 30vw, 270px);
+    min-height: 48px;
+  }
+  #item-name {
+    font-size: 16px;
+  }
+  #item-hint {
+    font-size: 8px;
+  }
+  .item-slot .tiny {
+    display: none;
+  }
+  #status-badges {
+    bottom: calc(72px + var(--safe-bottom));
+  }
+  #countdown {
+    font-size: 80px;
+    top: 30%;
+  }
+  #race-message {
+    top: 36%;
+    font-size: 10px;
+  }
+}
+#tilt-status {
+  display: none;
+}
+@media (any-pointer: coarse), (max-width: 760px) {
+  #touch-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    max-width: 160px;
+  }
+  #touch-tilt {
+    flex-basis: 100%;
+  }
+  #touch-tilt[aria-pressed="true"] {
+    color: #f5cc65;
+    border-color: #f5cc65;
+  }
+  .race-sound {
+    top: calc(210px + var(--safe-top));
+  }
+  #tilt-status {
+    display: block;
+    position: absolute;
+    top: calc(258px + var(--safe-top));
+    right: max(16px, var(--safe-right));
+    width: 160px;
+    margin: 0;
+    font-size: 10px;
+    line-height: 1.4;
+    text-align: right;
+    text-shadow: 0 1px 4px #10282b;
+  }
+}
+@media (any-pointer: coarse) and (orientation: landscape) {
+  #touch-actions {
+    max-width: none;
+    flex-wrap: nowrap;
+  }
+  #touch-tilt {
+    flex-basis: auto;
+  }
+  .race-sound {
+    top: calc(112px + var(--safe-top));
+  }
+  #tilt-status {
+    top: auto;
+    bottom: calc(108px + var(--safe-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    width: 220px;
+    text-align: center;
+  }
+}
+/* On tablets the supply fits between the two upper thumb buttons. */
+@media (any-pointer: coarse) and (min-width: 761px) and (orientation: portrait) {
+  .hud-bottom {
+    bottom: calc(148px + var(--safe-bottom));
+  }
+  .item-slot {
+    bottom: calc(72px + var(--safe-bottom));
+    min-height: 52px;
+    padding: 8px 12px;
+  }
+  .item-slot .tiny {
+    display: none;
+  }
+  #item-name {
+    font-size: 18px;
+  }
+  #item-hint {
+    font-size: 9px;
+  }
+}
+/* A landscape tablet has room to keep the map and race standings visible. */
+@media (any-pointer: coarse) and (orientation: landscape) and (min-height: 600px) {
+  .hud-bottom {
+    top: auto;
+    bottom: calc(132px + var(--safe-bottom));
+    justify-content: space-between;
+  }
+  .map-block,
+  .standings {
+    display: flex;
+  }
+  .speedometer {
+    width: 180px;
+  }
+  .speedometer strong {
+    font-size: 80px;
+  }
+}

@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:ai": "node scripts/check-ai.ts",
     "test:browser": "node scripts/browser-smoke.mjs",
+    "test:mobile": "node scripts/mobile-smoke.mjs",
     "test:security": "node scripts/security-smoke.mjs",
     "format": "prettier --write src scripts index.html vite.config.ts"
   },

@@ -10,6 +10,7 @@ import {
   type Input,
 } from "./physics";
 import "./style.css";
+import { TiltInput } from "./tilt";
 import { CasterTrails, DriftSparks } from "./effects";
 import { attachRider, animateRider, RIDERS } from "./rider";
 import { RiderFeedback } from "./rider-feedback";
@@ -52,12 +53,12 @@ app.innerHTML = `
   <main id="menu">
     <section class="hero"><div class="eyebrow"><span class="live-dot"></span> SCHOOL’S OUT. PROJECTORS AREN’T.</div><h1>ZERO AERO.<br>ALL <em>OVERDRIVE.</em></h1><p class="intro" id="hero-intro">The classroom legend. Now a track menace.<br>Take your overhead projector for the ride of its life.</p><div class="hero-meta"><span>01 — GAILDORF, GERMANY</span><span>EST. AFTER SCHOOL</span></div></section>
     <aside class="machine-label"><span class="label-line"></span><span class="tiny">YOUR HIGH-PERFORMANCE DINOSAUR</span><strong>THE ORIGINAL <span>01</span></strong><span class="machine-spec">850 W OF QUESTIONABLE DECISIONS</span><button id="crew-shortcut" class="crew-shortcut">MEET YOUR ACCOMPLICE ↗</button></aside>
-    <section class="race-picker"><div class="section-label"><span>01 / PICK YOUR PLAYGROUND</span><span class="track-count">3 PLACES. ONE QUESTIONABLE VEHICLE.</span></div><div id="tracks" class="track-grid"></div><p id="track-brief" class="track-brief"></p><div class="launch-row"><div class="keys-caption"><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span><span>DRIVE</span><span class="key wide">SPACE</span><span>DRIFT</span><span class="key wide">SHIFT</span><span>BOOST</span><span class="key">E</span><span>ITEM</span></div><button id="start" class="primary">LET’S ROLL <span>↗</span></button></div></section>
+    <section class="race-picker"><div class="section-label"><span>01 / PICK YOUR PLAYGROUND</span><span class="track-count">3 PLACES. ONE QUESTIONABLE VEHICLE.</span></div><div id="tracks" class="track-grid"></div><p id="track-brief" class="track-brief"></p><div class="launch-row"><div class="keys-caption"><span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span><span>DRIVE</span><span class="key wide">SPACE</span><span>DRIFT</span><span class="key wide">SHIFT</span><span>BOOST</span><span class="key">E</span><span>ITEM</span></div><p class="touch-caption">Hold GO to drive. Steer with ◀ ▶. Hold DRIFT, then release for a kick. Tap your supply to use it. Try TILT for motion steering.</p><button id="start" class="primary">LET’S ROLL <span>↗</span></button></div></section>
   </main>
   <section id="garage" class="panel hidden"><span class="eyebrow">THE GARAGE / BUILT DIFFERENT</span><h2>Office equipment.<br><em>Unprofessional speed.</em></h2><p>Pick your accomplice. Borrow a projector. Return it before Monday.</p><section class="crew-picker" aria-label="Choose your rider"><div class="crew-heading"><span class="tiny">01 / WHO’S BORROWING IT?</span><div class="crew-modes" aria-label="Rider mode"><button id="ride-mode" aria-pressed="true">RIDE ALONG</button><button id="classic-mode" aria-pressed="false">CLASSIC</button></div></div><div id="rider-cards" class="rider-cards"></div><p id="rider-bio" class="rider-bio"></p><span class="crew-note">Same trolley handling. Different questionable decisions.</span></section><div class="section-label tuning-label">02 / TUNE YOUR TROLLEY</div><div id="setups" class="setups"></div><div class="paint-row"><span>RACING LIVERY</span><div id="paints"></div></div><button id="garage-done" class="primary">BACK TO THE GRID <span>↗</span></button></section>
   <section id="school" class="panel school-panel hidden"><span class="eyebrow">THE SCHOOL / REAL PLACE. UNREAL RACING.</span><h2>Back to<br><em>Gaildorf.</em></h2><p>A 3D interpretation of the Schenk-von-Limpurg-Gymnasium, built from its public architecture photos: the glass-roof atrium, white brick walls, yellow doors and steel gallery railings.</p><div class="school-note"><strong>A familiar school. A new racing line.</strong><p>The visual details follow photos. Room connections, dimensions and race courses are imagined for the game, not a surveyed reconstruction.</p></div><div class="source-links"><a href="https://www.svlg-gaildorf.de/de/unsere-schule/profil" target="_blank" rel="noopener">EXPLORE THE SCHOOL WEBSITE ↗</a><a href="/school-reference.md" target="_blank" rel="noopener">PHOTO REFERENCES & MODEL NOTES ↗</a></div><button id="tour" class="primary">TAKE A FREE DRIVE <span>↗</span></button><button id="export-model" class="secondary">DOWNLOAD THIS 3D SCHOOL · GLB ↓</button><p id="export-status" role="status"></p></section>
   <footer id="footer"><span>A LOVE LETTER TO SCHOOL DAYS & ARCADE RACERS.</span><span>NO HOMEWORK. JUST HORSEPOWER. <b>↗</b></span></footer>
-  <section id="hud" class="hidden"><div class="hud-top"><div><span class="tiny" id="race-title">ATRIUM CIRCUIT</span><div class="position"><strong id="position">1</strong><span>/ 4</span></div></div><div class="timing"><span class="tiny" id="lap">LAP 1 / 3</span><strong id="timer">00:00.00</strong><span id="best" class="tiny"></span></div><button id="pause" class="hud-button" aria-label="Pause game">Ⅱ</button></div><div id="standings" class="standings"></div><button id="race-sound" class="race-sound" aria-label="Toggle race sound">SOUND OFF</button><button id="item-slot" class="item-slot" aria-label="Use equipped item"><span id="item-icon">＋</span><div><span class="tiny">SCHOOL SUPPLIES</span><strong id="item-name">FIND A PICKUP</strong><span id="item-hint">Drive through a glowing supply box</span></div><kbd id="item-key">E</kbd></button><div id="status-badges"></div><div id="hit-flash"></div><div id="countdown"></div><div id="race-message"></div><div class="hud-bottom"><div class="map-block"><canvas id="minimap" width="220" height="160"></canvas><span id="next-turn" class="tiny">FOLLOW THE PAINTED ARROWS</span></div><div class="race-controls"><span>WASD / ARROWS · DRIVE</span><span>SPACE · DRIFT &nbsp; SHIFT · BOOST &nbsp; E · USE ITEM</span><span>R · RECOVER &nbsp; C · CAMERA &nbsp; ESC · PAUSE</span></div><div class="speedometer"><span id="drift-label">READY TO ROLL</span><div><strong id="speed">0</strong><span>KM/H</span></div><div class="drift-meter" aria-label="Drift charge"><div id="drift-charge"></div></div><div class="boost-track"><div id="boost-bar"></div></div><span class="tiny">LAMP OVERDRIVE <span id="boost-value">100%</span></span></div></div><div id="touch-controls"><button data-key="ArrowLeft" aria-label="Steer left">◀</button><button data-key="ArrowRight" aria-label="Steer right">▶</button><button data-key="ArrowDown" aria-label="Brake and reverse">↓</button><button data-key="Space">DRIFT</button><button data-key="ShiftLeft">BOOST</button><button data-key="KeyE" aria-label="Use item">ITEM</button><button data-key="ArrowUp">GO</button></div></section>
+  <section id="hud" class="hidden"><div class="hud-top"><div><span class="tiny" id="race-title">ATRIUM CIRCUIT</span><div class="position"><strong id="position">1</strong><span>/ 4</span></div></div><div class="timing"><span class="tiny" id="lap">LAP 1 / 3</span><strong id="timer">00:00.00</strong><span id="best" class="tiny"></span></div><button id="pause" class="hud-button" aria-label="Pause game">Ⅱ</button></div><div id="standings" class="standings"></div><button id="race-sound" class="race-sound" aria-label="Toggle race sound">SOUND OFF</button><button id="item-slot" class="item-slot" aria-label="Use equipped item"><span id="item-icon">＋</span><div><span class="tiny">SCHOOL SUPPLIES</span><strong id="item-name">FIND A PICKUP</strong><span id="item-hint">Drive through a glowing supply box</span></div><kbd id="item-key">E</kbd></button><div id="status-badges"></div><div id="hit-flash"></div><div id="countdown"></div><div id="race-message"></div><div class="hud-bottom"><div class="map-block"><canvas id="minimap" width="220" height="160"></canvas><span id="next-turn" class="tiny">FOLLOW THE PAINTED ARROWS</span></div><div class="race-controls"><span>WASD / ARROWS · DRIVE</span><span>SPACE · DRIFT &nbsp; SHIFT · BOOST &nbsp; E · USE ITEM</span><span>R · RECOVER &nbsp; C · CAMERA &nbsp; ESC · PAUSE</span></div><div class="speedometer"><span id="drift-label">READY TO ROLL</span><div><strong id="speed">0</strong><span>KM/H</span></div><div class="drift-meter" aria-label="Drift charge"><div id="drift-charge"></div></div><div class="boost-track"><div id="boost-bar"></div></div><span class="tiny">LAMP OVERDRIVE <span id="boost-value">100%</span></span></div></div><div id="touch-actions"><button id="touch-tilt" class="hud-button" aria-pressed="false">TILT OFF</button><button id="touch-recover" class="hud-button" aria-label="Recover at last checkpoint">RECOVER</button><button id="touch-camera" class="hud-button" aria-label="Switch camera">CAMERA</button></div><p id="tilt-status" role="status"></p><div id="touch-controls" aria-label="Touch driving controls"><button data-key="ArrowLeft" aria-label="Steer left">◀</button><button data-key="ArrowRight" aria-label="Steer right">▶</button><button data-key="ArrowDown" aria-label="Brake and reverse">↓</button><button data-key="Space" aria-label="Hold to drift">DRIFT</button><button data-key="ShiftLeft" aria-label="Hold to boost">BOOST</button><button data-key="ArrowUp" aria-label="Accelerate">GO</button></div></section>
   <div id="overlay" class="overlay hidden"><div class="dialog"><span class="eyebrow" id="overlay-tag">RECESS</span><h2 id="overlay-title">Take a breather.</h2><p id="overlay-copy">Your projector is keeping the lamp warm.</p><div id="results"></div><button id="resume" class="primary">KEEP ROLLING <span>↗</span></button><button id="restart" class="secondary">RESTART RACE</button><button id="quit" class="text-button">BACK TO SCHOOL SELECTION</button></div></div>
   <div id="error" class="hidden"></div>`;
 const $ = <T extends HTMLElement = HTMLElement>(id: string) =>
@@ -119,6 +120,7 @@ try {
 } catch {
   /* Private browsing still gets a complete default crew. */
 }
+const touchDevice = matchMedia("(any-pointer: coarse)").matches;
 let renderer: THREE.WebGLRenderer;
 try {
   renderer = new THREE.WebGLRenderer({
@@ -131,8 +133,8 @@ try {
     "<h2>This projector needs WebGL.</h2><p>Please open the game in a browser with hardware acceleration enabled.</p>";
   throw new Error("WebGL is unavailable");
 }
-renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
-renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, touchDevice ? 1.25 : 1.7));
+renderer.setSize(innerWidth, innerHeight, false);
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -152,7 +154,8 @@ scene.add(new THREE.HemisphereLight("#fff5df", "#5b6e6c", 2.7));
 const sun = new THREE.DirectionalLight("#fff0cf", 3.4);
 sun.position.set(-18, 35, 22);
 sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
+const shadowSize = touchDevice ? 1024 : 2048;
+sun.shadow.mapSize.set(shadowSize, shadowSize);
 Object.assign(sun.shadow.camera, {
   left: -65,
   right: 65,
@@ -180,7 +183,31 @@ let racers: Racer[] = [],
   countdownTime = 3.6,
   accumulator = 0,
   recoverPenalty = 0;
+const tilt = new TiltInput();
+let tiltEnabled = false;
+let tiltTimeout: ReturnType<typeof setTimeout> | undefined;
 const keys = new Set<string>();
+// Track fingers independently from the keyboard and from other fingers on a button.
+const touchPointers = new Map<number, HTMLButtonElement>();
+const isDown = (key: string) =>
+  keys.has(key) ||
+  [...touchPointers.values()].some((b) => b.dataset.key === key);
+function clearControls() {
+  tilt.reset();
+  keys.clear();
+  const held = [...touchPointers];
+  touchPointers.clear();
+  for (const [id, button] of held) {
+    button.classList.remove("held");
+    if (button.hasPointerCapture(id)) button.releasePointerCapture(id);
+  }
+  pendingUse = pendingRecover = false;
+}
+function recoverPlayer() {
+  if (!["race", "tour"].includes(mode)) return;
+  if (onlineKind) pendingRecover = true;
+  else recover(racers[0]);
+}
 const bestKey = () => `overdrive-v3-best-${selected.id}-${setupIndex}`;
 const getBest = () => {
   try {
@@ -479,7 +506,7 @@ function showTab(tab: string) {
     .forEach((el) =>
       el.classList.toggle("active", (el as HTMLElement).dataset.tab === tab),
     );
-  keys.clear();
+  clearControls();
 }
 function startRace(tour = false) {
   if (onlineKind) stopOnline();
@@ -506,7 +533,7 @@ function startRace(tour = false) {
     ? `PERSONAL BEST ${format(getBest())}`
     : "SET YOUR FIRST RECORD";
   $("countdown").textContent = tour ? "" : "3";
-  keys.clear();
+  clearControls();
   camera.position
     .copy(racers[0].mesh.position)
     .add(new THREE.Vector3(-5, 5, -7));
@@ -516,13 +543,15 @@ function startRace(tour = false) {
 function pause() {
   if (mode === "paused") {
     mode = previousMode;
+    tilt.reset();
     hidden("overlay", true);
+    audio.start();
     return;
   }
   if (!["race", "countdown", "tour"].includes(mode)) return;
   previousMode = mode;
   mode = "paused";
-  keys.clear();
+  clearControls();
   hidden("overlay", false);
   $("overlay-tag").textContent = "RECESS";
   $("overlay-title").textContent = "Take a breather.";
@@ -690,16 +719,14 @@ function step(dt: number) {
   racers.forEach((r) => (r.recoveryGrace = Math.max(0, r.recoveryGrace - dt)));
   const input: Input = {
     throttle:
-      keys.has("KeyW") || keys.has("ArrowUp")
+      isDown("KeyW") || isDown("ArrowUp")
         ? 1
-        : keys.has("KeyS") || keys.has("ArrowDown")
+        : isDown("KeyS") || isDown("ArrowDown")
           ? -1
           : 0,
-    steer:
-      (keys.has("KeyD") || keys.has("ArrowRight") ? 1 : 0) -
-      (keys.has("KeyA") || keys.has("ArrowLeft") ? 1 : 0),
-    brake: keys.has("Space"),
-    boost: keys.has("ShiftLeft") || keys.has("ShiftRight"),
+    steer: steeringInput(),
+    brake: isDown("Space"),
+    boost: isDown("ShiftLeft") || isDown("ShiftRight"),
   };
   const player = racers[0];
   if (items.equipment[0].stun > 0) {
@@ -827,13 +854,16 @@ function step(dt: number) {
     }
   }
   items.step(dt);
-  if (keys.has("KeyE") || keys.has("KeyQ")) items.use(0);
+  if (isDown("KeyE") || isDown("KeyQ")) items.use(0);
   for (const event of items.drainEvents()) {
     itemView.event(event);
     const isPlayer = event.owner === 0;
     if (event.type === "pickup" && isPlayer) {
       audio.pickup();
-      announce(`${ITEM_INFO[event.kind!].name} · E TO USE`, 2.1);
+      announce(
+        `${ITEM_INFO[event.kind!].name} · ${touchDevice ? "TAP SUPPLY TO USE" : "E TO USE"}`,
+        2.1,
+      );
     }
     if (event.type === "laser" && isPlayer) audio.laser();
     if (event.type === "shield" && isPlayer) {
@@ -925,7 +955,7 @@ function syncModels(time: number, dt = 0) {
       turbo:
         s.driftTurbo > 0 ||
         items?.equipment[i].turbo > 0 ||
-        (i === 0 && keys.has("ShiftLeft") && s.heat < 0.98 && s.boost > 0.02),
+        (i === 0 && isDown("ShiftLeft") && s.heat < 0.98 && s.boost > 0.02),
       celebrating: mode === "finish" && i === 0,
     };
     animateProjector(r.mesh, s, dt, time, animation);
@@ -1088,15 +1118,16 @@ function updateHUD() {
     s.driftTurbo > 0
       ? "CASTER KICK!"
       : s.driftCharge >= DRIFT_READY_CHARGE
-        ? "RELEASE SPACE → KICK!"
+        ? touchDevice
+          ? "RELEASE DRIFT → KICK!"
+          : "RELEASE SPACE → KICK!"
         : s.driftCharge > 0
           ? "CHARGING CASTERS"
           : s.heat > 0.88
             ? "LAMP COOLING"
             : s.drifting
               ? "CASTER CHAOS"
-              : (keys.has("ShiftLeft") || keys.has("ShiftRight")) &&
-                  s.boost > 0.02
+              : (isDown("ShiftLeft") || isDown("ShiftRight")) && s.boost > 0.02
                 ? "LAMP OVERDRIVE"
                 : "READY TO ROLL";
   $("drift-label").classList.toggle(
@@ -1112,7 +1143,9 @@ function updateHUD() {
     s.driftCharge >= DRIFT_READY_CHARGE
       ? "RELEASE DRIFT FOR A SPEED KICK"
       : raceTime < 8
-        ? "SPACE + STEER · CHARGE A DRIFT KICK"
+        ? touchDevice
+          ? "DRIFT + STEER · CHARGE A KICK"
+          : "SPACE + STEER · CHARGE A DRIFT KICK"
         : "GOLD CHEVRONS · A CHEEKY SPEED KICK";
   if (onlineKind === "trial")
     $("next-turn").textContent = "BOOST & CASTER KICKS · RECOVER +2 SEC";
@@ -1179,6 +1212,87 @@ $("export-model").onclick = async () => {
 };
 $("garage-done").onclick = () => showTab("race");
 $("pause").onclick = pause;
+function setTiltEnabled(enabled: boolean, message: string) {
+  clearTimeout(tiltTimeout);
+  tiltEnabled = enabled;
+  tilt.reset();
+  $("touch-tilt").textContent = enabled ? "TILT ON" : "TILT OFF";
+  $("touch-tilt").setAttribute("aria-pressed", String(enabled));
+  $("tilt-status").textContent = message;
+}
+$("touch-tilt").onclick = async () => {
+  if (tiltEnabled) {
+    setTiltEnabled(false, "Touch steering ready.");
+    return;
+  }
+  if (!window.isSecureContext) {
+    setTiltEnabled(false, "Tilt needs HTTPS. Touch controls still work.");
+    return;
+  }
+  if (typeof DeviceOrientationEvent === "undefined") {
+    setTiltEnabled(false, "Motion sensing unavailable. Use the touch arrows.");
+    return;
+  }
+  const button = $<HTMLButtonElement>("touch-tilt");
+  button.disabled = true;
+  try {
+    const sensor = DeviceOrientationEvent as typeof DeviceOrientationEvent & {
+      requestPermission?: () => Promise<string>;
+    };
+    if (
+      sensor.requestPermission &&
+      (await sensor.requestPermission()) !== "granted"
+    ) {
+      setTiltEnabled(
+        false,
+        "Motion access declined. Touch controls still work.",
+      );
+      return;
+    }
+    setTiltEnabled(
+      true,
+      "Hold your phone comfortably. Tilt left or right to steer.",
+    );
+    tiltTimeout = setTimeout(() => {
+      setTiltEnabled(
+        false,
+        "No motion data. Use touch steering or try TILT again.",
+      );
+    }, 5000);
+  } catch {
+    setTiltEnabled(
+      false,
+      "Motion access unavailable. Touch controls still work.",
+    );
+  } finally {
+    button.disabled = false;
+  }
+};
+window.addEventListener("deviceorientation", (event) => {
+  if (!tiltEnabled || document.hidden) return;
+  // iOS exposes the viewport rotation through window.orientation, including in Safari's mobile viewport.
+  const angle =
+    (window as Window & { orientation?: number }).orientation ??
+    screen.orientation?.angle ??
+    0;
+  if (
+    event.beta !== null &&
+    event.gamma !== null &&
+    Number.isFinite(event.beta) &&
+    Number.isFinite(event.gamma)
+  )
+    clearTimeout(tiltTimeout);
+  // A permission prompt can pause the game; wait for resume to calibrate the grip.
+  if (!["race", "tour", "countdown"].includes(mode)) return;
+  if (tilt.sample(event.beta, event.gamma, angle, performance.now())) {
+    clearTimeout(tiltTimeout);
+    $("tilt-status").textContent = "Tilt to steer · toggle off/on to recenter";
+  }
+});
+$("touch-recover").onclick = recoverPlayer;
+$("touch-camera").onclick = () => {
+  cameraMode = (cameraMode + 1) % 2;
+};
 $("resume").onclick = pause;
 $("restart").onclick = () => {
   if (onlineKind === "trial") {
@@ -1219,10 +1333,8 @@ window.addEventListener("keydown", (e) => {
   if (e.repeat) return;
   if (onlineKind === "room" && ["KeyE", "KeyQ"].includes(e.code))
     pendingUse = true;
-  if (onlineKind === "room" && e.code === "KeyR") pendingRecover = true;
+  if (e.code === "KeyR") recoverPlayer();
   if (e.code === "Escape") pause();
-  if (!onlineKind && e.code === "KeyR" && ["race", "tour"].includes(mode))
-    recover(racers[0]);
   if (e.code === "KeyC") cameraMode = (cameraMode + 1) % 2;
   if (
     e.code === "Enter" &&
@@ -1234,24 +1346,44 @@ window.addEventListener("keydown", (e) => {
 });
 window.addEventListener("keyup", (e) => keys.delete(e.code));
 window.addEventListener("blur", () => {
-  keys.clear();
+  clearControls();
   if (["race", "tour", "countdown"].includes(mode)) pause();
 });
 document.addEventListener("visibilitychange", () => {
-  if (document.hidden && ["race", "tour", "countdown"].includes(mode)) pause();
+  if (document.hidden) {
+    clearControls();
+    if (["race", "tour", "countdown"].includes(mode)) pause();
+  }
 });
 document.querySelectorAll<HTMLButtonElement>("[data-key]").forEach((b) => {
+  b.oncontextmenu = (e) => e.preventDefault();
   b.onpointerdown = (e) => {
-    b.setPointerCapture(e.pointerId);
-    keys.add(b.dataset.key!);
+    if (!["race", "tour", "countdown"].includes(mode)) return;
     e.preventDefault();
+    b.setPointerCapture(e.pointerId);
+    touchPointers.set(e.pointerId, b);
+    b.classList.add("held");
+    audio.start();
   };
-  b.onpointerup = b.onpointercancel = () => keys.delete(b.dataset.key!);
+  const release = (e: PointerEvent) => {
+    touchPointers.delete(e.pointerId);
+    b.classList.toggle("held", [...touchPointers.values()].includes(b));
+  };
+  b.onpointerup = b.onpointercancel = b.onlostpointercapture = release;
 });
-window.addEventListener("resize", () => {
-  camera.aspect = innerWidth / innerHeight;
+function resizeViewport() {
+  const { width, height } = $("viewport").getBoundingClientRect();
+  camera.aspect = width / height;
   camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
+  renderer.setSize(width, height, false);
+}
+new ResizeObserver(() => requestAnimationFrame(resizeViewport)).observe(
+  $("viewport"),
+);
+window.addEventListener("resize", resizeViewport);
+window.addEventListener("orientationchange", () => {
+  clearControls();
+  if (["race", "tour", "countdown"].includes(mode)) pause();
 });
 // Online racing shares the deterministic simulation used to check submitted runs.
 let onlineKind: "trial" | "room" | null = null;
@@ -1273,17 +1405,27 @@ let pendingUse = false;
 let pendingRecover = false;
 let recordsGeneration = 0;
 
+function steeringInput() {
+  const left = isDown("KeyA") || isDown("ArrowLeft");
+  const right = isDown("KeyD") || isDown("ArrowRight");
+  return left || right
+    ? Number(right) - Number(left)
+    : tiltEnabled
+      ? tilt.steer(performance.now())
+      : 0;
+}
 function onlineMask() {
   if (document.hidden || mode === "paused" || mode === "finish") return 0;
+  const steer = steeringInput();
   return (
-    (keys.has("KeyW") || keys.has("ArrowUp") ? 1 : 0) |
-    (keys.has("KeyS") || keys.has("ArrowDown") ? 2 : 0) |
-    (keys.has("KeyA") || keys.has("ArrowLeft") ? 4 : 0) |
-    (keys.has("KeyD") || keys.has("ArrowRight") ? 8 : 0) |
-    (keys.has("Space") ? 16 : 0) |
-    (keys.has("ShiftLeft") || keys.has("ShiftRight") ? 32 : 0) |
-    (keys.has("KeyE") || keys.has("KeyQ") || pendingUse ? 64 : 0) |
-    (keys.has("KeyR") || pendingRecover ? 128 : 0)
+    (isDown("KeyW") || isDown("ArrowUp") ? 1 : 0) |
+    (isDown("KeyS") || isDown("ArrowDown") ? 2 : 0) |
+    (steer < -0.15 ? 4 : 0) |
+    (steer > 0.15 ? 8 : 0) |
+    (isDown("Space") ? 16 : 0) |
+    (isDown("ShiftLeft") || isDown("ShiftRight") ? 32 : 0) |
+    (isDown("KeyE") || isDown("KeyQ") || pendingUse ? 64 : 0) |
+    (isDown("KeyR") || pendingRecover ? 128 : 0)
   );
 }
 async function ensureOnlineSession() {
@@ -1706,7 +1848,7 @@ async function finishOnline(completed = true) {
   if (onlineFinishing) return;
   onlineFinishing = true;
   mode = "finish";
-  keys.clear();
+  clearControls();
   audio.bell();
   hidden("overlay", false);
   hidden("resume", true);
@@ -1998,6 +2140,16 @@ requestAnimationFrame(frame);
 Object.defineProperty(window, "__OVERDRIVE__", {
   get: () => ({
     mode,
+    cameraMode,
+    tiltEnabled,
+    steering: steeringInput(),
+    input: {
+      throttle: isDown("ArrowUp") || isDown("KeyW"),
+      steerLeft: isDown("ArrowLeft") || isDown("KeyA"),
+      steerRight: isDown("ArrowRight") || isDown("KeyD"),
+      drift: isDown("Space"),
+      boost: isDown("ShiftLeft") || isDown("ShiftRight"),
+    },
     online: onlineKind,
     onlineTick: onlineRace?.tick,
     onlinePenaltyTicks: orderedOnlinePlayers()[0]?.penaltyTicks,
