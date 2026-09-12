@@ -676,7 +676,7 @@ function renderFinishResults() {
   waiting.textContent = raceClosed
     ? "CLASSIFICATION COMPLETE"
     : "YOUR TIME IS LOCKED · RIVALS ARE FINISHING THEIR LAPS";
-  $("results").append(waiting);
+  $("results").prepend(waiting);
 }
 function ordinal(n: number) {
   return ["1ST", "2ND", "3RD", "4TH"][n - 1] || String(n);
